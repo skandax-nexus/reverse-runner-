@@ -9,7 +9,25 @@ The design doc targets Unity/C# on Android. This repo is the HTML5 canvas
 prototype of the same loop, so the design can be played and tuned before the
 Unity build starts. Everything runs on-device in the browser, no backend.
 
-## Two builds
+## Retrograde (second game)
+
+`retrograde.html` (source `src/retrograde.html`) is a separate, original
+time-inversion puzzle game built on the same Three.js pipeline. You play Noor
+Idris, a sweeper for the Halvard Containment Office. Each site is one timeline:
+run it forward, step through the turnstile, then live the same seconds
+backwards while your forward self replays in reverse beside you.
+
+- **Credit.** A closed door can be opened on credit: a future inverted you
+  promises to hold its switch. Inverted, you must be on that switch before the
+  countdown reaches the red bar and stay until it passes, or the timeline folds.
+- **Reciprocity.** Any switch you hold forward is also held at those seconds
+  for your inverted self (gold marks on the timeline).
+- **Turrets.** Bullet positions are pure functions of the clock, so forward
+  rounds fly back into their guns when inverted, and inverted turrets show the
+  bullet hole before the shot.
+- Eight sites with a short original story, relics to collect, local progress.
+
+## Two builds of Stop That Runner!
 
 | File | What it is |
 |------|------------|

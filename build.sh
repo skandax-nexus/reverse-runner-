@@ -12,3 +12,4 @@ wrap() {
 }
 wrap src/game.html index.html
 wrap src/game3d.html index3d.html
+wrap src/retrograde.html retrograde.html
