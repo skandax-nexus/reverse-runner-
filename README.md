@@ -13,7 +13,7 @@ Unity build starts. Everything runs on-device in the browser, no backend.
 
 | File | What it is |
 |------|------------|
-| `index3d.html` (source `src/game3d.html`) | 3D build on Three.js r128: chase camera, real-time directional light with soft shadows, depth fog, modelled runner and traps, instanced particles, ACES tone mapping. Same rules as the 2D build. |
+| `index3d.html` (source `src/game3d.html`) | 3D build on Three.js r128: rigged runner (knees, elbows, face, hair, jacket, glowing stolen core, scarf with secondary motion), procedural run cycle with squash and stretch, per-trap ragdoll crashes, chase camera with speed FOV, sun and soft shadows, shader sky with clouds, HDR bloom, vignette and FXAA, per-world road surfaces, weather particles, street lights, billboards and glowing checkpoint gates. Same rules as the 2D build. |
 | `index.html` (source `src/game.html`) | 2D canvas build with the 2.5D side view. No dependencies at all. |
 
 Open either file in a modern browser (phone or desktop). No build step is
