@@ -9,11 +9,19 @@ The design doc targets Unity/C# on Android. This repo is the HTML5 canvas
 prototype of the same loop, so the design can be played and tuned before the
 Unity build starts. Everything runs on-device in the browser, no backend.
 
-## Play
+## Two builds
 
-Open `index.html` in any modern browser (phone or desktop). No build step is
-needed to play. `src/game.html` is the single source file; `./build.sh` wraps it
-into `index.html`.
+| File | What it is |
+|------|------------|
+| `index3d.html` (source `src/game3d.html`) | 3D build on Three.js r128: chase camera, real-time directional light with soft shadows, depth fog, modelled runner and traps, instanced particles, ACES tone mapping. Same rules as the 2D build. |
+| `index.html` (source `src/game.html`) | 2D canvas build with the 2.5D side view. No dependencies at all. |
+
+Open either file in a modern browser (phone or desktop). No build step is
+needed to play. `./build.sh` wraps the two `src/` pages into the standalone
+files. The 3D build loads Three.js from cdnjs, so it needs network access the
+first time; everything else is inline. Each build keeps its own save data.
+
+## Play
 
 | Gesture        | Trap            | Energy |
 |----------------|-----------------|--------|
