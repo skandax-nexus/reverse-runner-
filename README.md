@@ -17,15 +17,27 @@ Idris, a sweeper for the Halvard Containment Office. Each site is one timeline:
 run it forward, step through the turnstile, then live the same seconds
 backwards while your forward self replays in reverse beside you.
 
+Sixteen sites in four districts (Deep Lab, Docks, Archive, Tower), each with a
+three-star rating (clear, all relics, par time). Stars unlock districts.
+
 - **Credit.** A closed door can be opened on credit: a future inverted you
   promises to hold its switch. Inverted, you must be on that switch before the
   countdown reaches the red bar and stay until it passes, or the timeline folds.
 - **Reciprocity.** Any switch you hold forward is also held at those seconds
   for your inverted self (gold marks on the timeline).
+- **Crates.** Carry and drop crates. A crate on a switch holds it; a crate on
+  the floor stops bullets. Crates only move in the first forward run and replay
+  afterwards.
+- **Air.** Inverted runs have a limited air supply; blue vents refill it.
+- **Sentries and lasers.** Sentries walk fixed loops with vision cones; laser
+  lattices pulse on a schedule. Both are pure functions of the clock, so they
+  run backwards when you do.
+- **Second turnstile.** A gold turnstile re-inverts you into a third, forward
+  self. Switches your inverted self held are open for you at those seconds. The
+  red exit is the way home.
 - **Turrets.** Bullet positions are pure functions of the clock, so forward
   rounds fly back into their guns when inverted, and inverted turrets show the
   bullet hole before the shot.
-- Eight sites with a short original story, relics to collect, local progress.
 
 ## Two builds of Stop That Runner!
 

@@ -25,6 +25,16 @@ body{margin:0;background:var(--ink);color:var(--fg);font-family:var(--body);over
 #phase{font-family:var(--display);font-size:15px;letter-spacing:.18em;text-transform:uppercase;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--glass)}
 #phase.fwd{color:var(--fwd);border-color:var(--fwd)}
 #phase.inv{color:var(--inv);border-color:var(--inv)}
+#phase.f2{color:var(--gold);border-color:var(--gold)}
+#airchip b{color:var(--inv)}#airchip.low b{color:var(--bad)}
+.heldI{position:absolute;top:4px;bottom:18px;background:rgba(61,169,255,.7);border-radius:2px}
+#tlturn2{position:absolute;top:0;bottom:0;width:2px;background:var(--gold);opacity:0}
+.district{background:var(--glass2);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.district h3{color:var(--fg)}
+.district.lock{opacity:.5}
+.dsub{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.stars{color:var(--gold);letter-spacing:.1em;font-size:13px}
+.act2{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
 #timeline{position:relative;height:30px;background:var(--glass);border:1px solid var(--line);border-radius:8px;overflow:hidden}
 #tlfill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,rgba(255,106,61,.25),rgba(255,106,61,.55))}
 #tlfill.inv{background:linear-gradient(90deg,rgba(61,169,255,.6),rgba(61,169,255,.2))}
@@ -95,16 +105,17 @@ p{margin:0;line-height:1.5;color:var(--muted)}
       <div class="chip"><small>Level</small><b id="lvname">1</b></div>
       <div id="phase" class="fwd">Forward</div>
       <div class="chip"><small>Relics</small><b id="relics">0/0</b></div>
+      <div class="chip" id="airchip" hidden><small>Air</small><b id="air">30</b></div>
       <button id="pausebtn" class="btn small" style="pointer-events:auto">Menu</button>
     </div>
-    <div id="timeline"><div id="tlfill"></div><div id="tldebts"></div><div id="tlturn"></div><div id="tlmark"></div><div id="tlclock">0.0 s</div></div>
+    <div id="timeline"><div id="tlfill"></div><div id="tldebts"></div><div id="tlturn"></div><div id="tlturn2"></div><div id="tlmark"></div><div id="tlclock">0.0 s</div></div>
   </div>
   <div id="prompt"></div>
   <div id="toast"></div>
 
   <div id="bottom" class="hud" hidden>
     <div id="stick"><div id="knob"></div></div>
-    <div id="actions"><button id="act" class="btn">Act</button></div>
+    <div id="actions"><button id="carry" class="btn" style="display:none;width:86px;height:86px;border-radius:50%;font-family:var(--display);font-size:14px;letter-spacing:.08em;text-transform:uppercase">Pick up</button><button id="act" class="btn">Act</button></div>
   </div>
 
   <div id="menu" class="ov">
@@ -118,14 +129,20 @@ p{margin:0;line-height:1.5;color:var(--muted)}
       <div class="rules">
         <div class="rule"><i style="background:var(--fwd)"></i><span><b>Forward.</b> Reach the turnstile before the timer runs out. The longer you wait before inverting, the more inverted time you get.</span></div>
         <div class="rule"><i style="background:var(--inv)"></i><span><b>Inverted.</b> The clock runs backwards to zero. Reach the blue exit before it does. Bullets fly back into their guns. Doors are open only when someone is really on the switch at that moment.</span></div>
-        <div class="rule"><i style="background:var(--bad)"></i><span><b>Credit.</b> A closed door with a switch can be opened on credit: a future inverted you promises to hold the switch. The red bar on the timeline is that promise. Inverted, be on the switch before the clock reaches it, and stay until it passes. Break the promise and the timeline folds.</span></div>
+        <div class="rule"><i style="background:var(--bad)"></i><span><b>Credit.</b> A closed door with a switch can be opened on credit: a future inverted you promises to hold the switch. The red bar on the timeline is that promise. Inverted, be on the switch before the clock reaches it, and stay until it passes. Break the promise and the timeline folds. The later you borrow, the more inverted time you keep after paying.</span></div>
         <div class="rule"><i style="background:var(--gold)"></i><span><b>Reciprocity.</b> Any switch you hold forward is also held at those seconds for your inverted self. Gold marks on the timeline show when.</span></div>
       </div>
-      <h3>Sites</h3>
-      <div class="levels" id="levels"></div>
+      <div class="rules">
+        <div class="rule"><i style="background:#c9a06a"></i><span><b>Crates.</b> Pick one up, carry it, drop it. A crate on a switch weighs as much as you. A crate on the floor stops bullets. Crates only move in your first forward run; afterwards they replay.</span></div>
+        <div class="rule"><i style="background:#7fd3ff"></i><span><b>Air.</b> Inverted lungs need inverted air. The mask holds a limited supply; blue vents refill it.</span></div>
+        <div class="rule"><i style="background:#ff8a5c"></i><span><b>Sentries and lasers.</b> Sentries walk fixed loops and raise the alarm if their cone finds you. Lasers pulse on a schedule. Both run backwards when you do.</span></div>
+        <div class="rule"><i style="background:var(--gold)"></i><span><b>Second turnstile.</b> Step through a gold turnstile while inverted and you run forward again as a third you. Doors your inverted self held are open for you at those seconds. The red exit is yours.</span></div>
+      </div>
+      <h3>Districts</h3>
+      <div id="districts" class="panel"></div>
       <div class="row"><button class="btn primary" id="play">Continue</button></div>
       <div class="toggle"><label for="s-sound">Sound</label><input type="checkbox" id="s-sound" checked></div>
-      <p class="muted">Keyboard: WASD or arrows to move, E or Space to act, R restarts, Esc opens this menu. Touch: drag the left pad to move, tap the round button to act.</p>
+      <p class="muted">Keyboard: WASD or arrows to move, E or Space to act (credit), F to pick up or drop a crate, R restarts, Esc opens this menu. Touch: drag the left pad to move, tap the round buttons to act.</p>
     </div>
   </div>
 
@@ -157,88 +174,60 @@ const clamp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,t)=>a+(b-a)*t;
 const CELL=2,REC_HZ=60;
 
 /* ---------- save ---------- */
-const SAVE_KEY='retrograde.v1';
-function defaults(){return{unlocked:1,done:{},best:{},sound:true}}
+const SAVE_KEY='retrograde.v2';
+function defaults(){return{done:{},stars:{},best:{},sound:true}}
 let save=defaults();try{const s=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(s)save=Object.assign(defaults(),s)}catch(e){}
 function persist(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(save))}catch(e){}}
 
-/* ---------- levels ----------
- # wall  . floor  S start  T turnstile  X exit (inverted only)  * relic
- 1-4 doors, a-d their switches (a opens 1)
- > < ^ v forward turrets  } { A V inverted turrets (bullets fly from the wall into the gun in forward time)
+/* ---------- content ----------
+ # wall  . floor  S start  T turnstile  U second turnstile (gold)  X blue exit (inverted)  Y red exit (forward II)
+ * relic  1-6 doors  a-f switches  B crate  o air vent  L laser cell
+ > < ^ v forward turrets   } { A V inverted turrets
+ guards: waypoint loops in cell coordinates
 */
+const DISTRICTS=[
+ {name:'Deep Lab',story:'The leak started under the lab. Four sealed floors where the office trains sweepers on the basics: the turnstile, credit, bullets, and holding a door for yourself.',need:0,palette:{wall:'#2a3150',cap:'#3b4570',floor:'#1a2034',edge:'#3da9ff'}},
+ {name:'The Docks',story:'Retrograde cargo came in through the docks. Crates that weigh what you weigh, air you have to budget, and sentries that walk their rounds in both directions.',need:4,palette:{wall:'#2d3a3a',cap:'#3f5252',floor:'#182424',edge:'#5ce1a3'}},
+ {name:'The Archive',story:'The archive is where the erased records went. Laser lattices on timers, pincer moves, and a second turnstile that lets you run forward again as a third you.',need:9,palette:{wall:'#3a2d3f',cap:'#55405c',floor:'#241a28',edge:'#ff6fae'}},
+ {name:'The Tower',story:'The broadcast tower. Everything at once. The seeder is on the top floor, and the footprints going up the stairs are yours, walking down.',need:15,palette:{wall:'#3a3024',cap:'#5a4a34',floor:'#241f16',edge:'#ffd166'}},
+];
 const LEVELS=[
- {name:'Induction',T:28,story:'The office gave you a mask and one rule: never meet yourself. You will break it before lunch. Walk to the turnstile. Then walk back to the blue exit. You will arrive before you left.',goal:'Reach the turnstile, invert, reach the exit before the clock hits zero.',turret:{interval:2.5,speed:7},map:[
-  '##############',
-  '#S...........#',
-  '#......*.....#',
-  '#..........T.#',
-  '#............#',
-  '#X...........#',
-  '##############']},
- {name:'Credit',T:34,story:'Door 1 only opens while someone stands on switch A, and A is on the far side. So borrow it. Press the credit button at the door and a future inverted you promises to hold the switch. Inverted, keep that promise: be on A before the clock reaches the red bar.',goal:'Open door 1 on credit, invert, then pay the debt on switch A and reach the exit.',turret:{interval:2.5,speed:7},map:[
-  '####################',
-  '#S.........#....a..#',
-  '#..........1.......#',
-  '#..........#...T.X.#',
-  '#..........#.......#',
-  '#..........#.....*.#',
-  '####################']},
- {name:'Crossfire',T:40,story:'The turrets in the east hall were fired this morning. Forward, their bullets leave the guns. Inverted, you will watch the same bullets climb back into the barrels. Both directions kill.',goal:'Cross the turret hall twice.',turret:{interval:2.6,speed:7.5},map:[
-  '##################',
-  '#S.......>.......#',
-  '#................#',
-  '#..>.......>.....#',
-  '#.........*......#',
-  '#.......T........#',
-  '#X...<...........#',
-  '##################']},
- {name:'Reciprocity',T:40,story:'Whatever you hold forward, you hold for your inverted self too. Stand on switch B for a while before you go. Later, running backwards, door 2 will be open during exactly those seconds. Plan the gold.',goal:'Hold B early, take credit at door 1, pay A inverted, pass door 2 while your forward self is still on B.',turret:{interval:2.5,speed:7},map:[
-  '##################',
-  '#S.b...#....a....#',
-  '#......1.........#',
-  '#......#....T....#',
-  '#......###2#######',
-  '#X.*.............#',
-  '##################']},
- {name:'Retrograde fire',T:42,story:'Someone left inverted guns in the gallery. Forward, you see the bullet holes first; then the bullets rise out of the wall and fly home. Inverted, they fire like any other gun. Read the holes.',goal:'Pass the inverted turrets both ways.',turret:{interval:2.4,speed:7.5},map:[
-  '##################',
-  '#S...............#',
-  '#......}.........#',
-  '#................#',
-  '#....*......{....#',
-  '#.........T......#',
-  '#X...............#',
-  '##################']},
- {name:'Pincer',T:50,story:'Two doors, two debts, one you going each way. The office calls it a pincer: the forward team learns what the inverted team already knows. Here both teams are you.',goal:'Take credit on doors 1 and 2, pay A and B inverted, mind the guns.',turret:{interval:2.8,speed:7},map:[
-  '####################',
-  '#S.....#....a......#',
-  '#......1......>....#',
-  '#......#...........#',
-  '####2#######.....T.#',
-  '#..b......*........#',
-  '#X.........<.......#',
-  '####################']},
- {name:'The seeder',T:56,story:'The seeder was here minutes ago. Their footprints run the wrong way. Every relic in this site is retrograde: pick them up and in forward time you will have dropped them. You are closing in.',goal:'Collect all three relics across both runs. Hold C early for yourself.',turret:{interval:2.5,speed:8},map:[
-  '####################',
-  '#S.c...#...a.......#',
-  '#......1.......>...#',
-  '#*.....#...........#',
-  '####3########2######',
-  '#..........b.......#',
-  '#.*....}.....T.....#',
-  '#X.........*.......#',
-  '####################']},
- {name:'Fold',T:64,story:'You find the seeder on the last floor. Blue mask, your coat, your face. "I told you not to meet yourself," she says. "You will tell me the same thing, later. Or earlier." The relics were never a leak. They were a message you have not sent yet.',goal:'Close the fold: every door on credit, every debt paid, every gun crossed twice.',turret:{interval:2.3,speed:8},map:[
-  '######################',
-  '#S.....#.....a...*...#',
-  '#......1.......}.....#',
-  '#..b...#.............#',
-  '####2#####3###########',
-  '#.........c........T.#',
-  '#....>...........*...#',
-  '#X...........<.......#',
-  '######################']},
+ // Deep Lab
+ {d:0,name:'Induction',T:28,par:4,air:0,story:'The office gave you a mask and one rule: never meet yourself. You will break it before lunch. Walk to the turnstile. Then walk back to the blue exit. You will arrive before you left.',goal:'Reach the turnstile, invert, reach the exit before the clock hits zero.',turret:{interval:2.5,speed:7},map:[
+  '##############','#S...........#','#......*.....#','#..........T.#','#............#','#X...........#','##############']},
+ {d:0,name:'Credit',T:34,par:3,air:0,story:'Door 1 only opens while someone stands on switch A, and A is on the far side. So borrow it. Press the credit button at the door and a future inverted you promises to hold the switch. Inverted, keep that promise: be on A before the clock reaches the red bar.',goal:'Open door 1 on credit, invert, then pay the debt on switch A and reach the exit.',turret:{interval:2.5,speed:7},map:[
+  '####################','#S.........#....a..#','#..........1.......#','#..........#...T.X.#','#..........#.......#','#..........#.....*.#','####################']},
+ {d:0,name:'Crossfire',T:40,par:5,air:0,story:'The turrets in the east hall were fired this morning. Forward, their bullets leave the guns. Inverted, you will watch the same bullets climb back into the barrels. Both directions kill.',goal:'Cross the turret hall twice.',turret:{interval:2.6,speed:7.5},map:[
+  '##################','#S.......>.......#','#................#','#..>.......>.....#','#.........*......#','#.......T........#','#X...<...........#','##################']},
+ {d:0,name:'Reciprocity',T:40,par:4,air:0,story:'Whatever you hold forward, you hold for your inverted self too. Stand on switch B for a while before you go. Later, running backwards, door 2 will be open during exactly those seconds. Plan the gold.',goal:'Hold B early, take credit at door 1, pay A inverted, pass door 2 while your forward self is still on B.',turret:{interval:2.5,speed:7},map:[
+  '##################','#S.b...#....a....#','#......1.........#','#......#....T....#','#......###2#######','#X.*.............#','##################']},
+ // Docks
+ {d:1,name:'Ballast',T:40,par:4,air:0,story:'Dock crates weigh exactly what a sweeper weighs. Carry one onto switch A and door 1 stays open for as long as the crate stays. Inverted, remember: before you put it there, it was not there.',goal:'Put the crate on A, invert, get back through door 1 before the clock passes the moment you placed it.',turret:{interval:2.5,speed:7},map:[
+  '######################','#S...B.a...#.........#','#..........1.....T...#','#X.........#.........#','#......*...#.........#','######################']},
+ {d:1,name:'Shield',T:44,par:4,air:0,story:'A crate on the floor stops a bullet. Forward, drop it in the line of fire and the corridor goes quiet. Inverted, the crate lifts away at the moment you dropped it, and the guns come back.',goal:'Block the lower turret with the crate, cross both ways.',turret:{interval:2.2,speed:7.5},map:[
+  '######################','#S....B..............#','#....................#','#>...................#','#......*.............#','#....................#','#>.............T.....#','#X...................#','######################']},
+ {d:1,name:'Breath',T:46,par:3,air:16,story:'Inverted lungs need inverted air. The mask holds sixteen seconds. Blue vents refill it. Plan the way back around the vents, not around the walls.',goal:'Pay the debt on A, then reach the exit without running out of air.',turret:{interval:2.4,speed:7.5},map:[
+  '########################','#S......}....#....a....#','#............1.........#','#......o.....#....T....#','#............#.........#','#.......*....#.o.....X.#','########################']},
+ {d:1,name:'Patrol',T:44,par:4,air:22,story:'Two sentries walk the yard. Their cones are short but their timing never changes. Inverted, they walk backwards along the same loop, so what you learned forward still holds, read from the other end.',goal:'Cross the yard twice without being seen.',turret:{interval:3,speed:7},guards:[{path:[[6,1],[16,1]],speed:2.6},{path:[[16,5],[6,5]],speed:2.6}],map:[
+  '########################','#S...................*.#','#......................#','#..........T...........#','#......................#','#......................#','#X.....................#','########################']},
+ // Archive
+ {d:2,name:'Lattice',T:44,par:4,air:22,story:'The archive gate is a lattice of lasers on a three second cycle. Every other beam is half a cycle out of phase. There is always a gap, if you are standing in the right lane at the right second.',goal:'Pass the lattice both ways.',turret:{interval:3,speed:7},laser:{period:3,duty:.5},map:[
+  '########################','#S.........L...........#','#..........L...........#','#..........L.....T.....#','#..........L...........#','#X...*.....L...........#','########################']},
+ {d:2,name:'Pincer',T:50,par:4,air:24,story:'Two doors, two debts, one you going each way. The office calls it a pincer: the forward team learns what the inverted team already knows. Here both teams are you.',goal:'Take credit on doors 1 and 2, pay A and B inverted, mind the guns.',turret:{interval:2.8,speed:7},map:[
+  '####################','#S.....#....a......#','#......1......>....#','#......#...........#','####2#######.....T.#','#..b......*........#','#X.........<.......#','####################']},
+ {d:2,name:'Third person',T:52,par:3,air:26,story:'A gold turnstile re-inverts you. Step through it inverted and you run forward again, a third you, with the clock climbing from wherever you left it. Your inverted self can hold a switch for the third you. Only the red exit will take you home. Borrow late: everything your inverted self must do happens before the debt, so a debt at twelve seconds leaves twelve seconds for the rest.',goal:'Credit door 1, invert, pay A, hold B for a few seconds, enter the gold turnstile, then pass door 2 while your inverted self is on B.',turret:{interval:3,speed:7},map:[
+  '########################','#S.....#......a........#','#......1......T........#','#......#...b...........#','#......#.......U.......#','#......#########2######','#......#.......Y.....*.#','########################']},
+ {d:2,name:'Sentinel',T:52,par:4,air:24,story:'A sentry guards the lattice. Its loop and the lasers share a clock. Somewhere in that clock there is a window where the beam is down and the sentry is looking the other way. Find it twice.',goal:'Credit the door, cross the lattice past the sentry, pay the debt, get out.',turret:{interval:3,speed:7},laser:{period:3,duty:.5},guards:[{path:[[13,1],[13,5]],speed:2.2}],map:[
+  '########################','#S.....#....L..........#','#......1....L....a.....#','#......#....L..........#','#......#....L....T.....#','#X.*...#....L..........#','########################']},
+ // Tower
+ {d:3,name:'Ground floor',T:56,par:4,air:26,story:'The tower lobby. Crates on the floor, guns on the balcony, a sentry at the desk. Everything the docks taught you, with less room.',goal:'Shield the corridor, credit the door, pay it inverted, mind the sentry.',turret:{interval:2.4,speed:8},guards:[{path:[[9,5],[19,5]],speed:2.4}],map:[
+  '########################','#S..B..#......a........#','#......1.........>.....#','#......#...............#','#......#.......*..T....#','#......#...............#','#X.....#..}............#','########################']},
+ {d:3,name:'Records',T:60,par:3,air:24,story:'The record floor. Two lattices, two debts, one vent. Your forward self must hold C long enough for the inverted you to get through the second lattice, and the inverted you must pay A and B. Budget the air.',goal:'Hold C early, credit doors 1 and 2, pay both inverted, cross both lattices.',turret:{interval:3,speed:7},laser:{period:3,duty:.5},map:[
+  '##########################','#S.c...#....a....L.......#','#......1.........L.......#','#......#.........L...T...#','#......#....b....L.......#','####2#####################','#X.....o.........*.......#','##########################']},
+ {d:3,name:'Pincer II',T:62,par:3,air:28,story:'Second gold turnstile. This time the third you has to cross a turret line that only a crate can shield, and the crate was placed by the first you. Three of you, one crate, one clock.',goal:'Place the crate, credit door 1, invert, pay A, hold B, re-invert, pass door 2 and reach the red exit.',turret:{interval:2.6,speed:8},map:[
+  '##########################','#S..B..#.......a.........#','#......1.......T.........#','#......#...b.............#','#......#.........U.......#','#......#########2#########','#......#>......Y.......*.#','##########################']},
+ {d:3,name:'Fold',T:70,par:3,air:28,story:'You find the seeder on the top floor. Blue mask, your coat, your face. "I told you not to meet yourself," she says. "You will tell me the same thing, later. Or earlier." The relics were never a leak. They were a message you have not sent yet.',goal:'Close the fold: credit, crate, lattice, sentry, second turnstile, red exit.',turret:{interval:2.5,speed:8},laser:{period:3,duty:.5},guards:[{path:[[12,1],[12,4]],speed:2.2}],map:[
+  '############################','#S..B..#...L.....a.........#','#......1...L.....T.........#','#......#...L...b...........#','#......#...L.......U.......#','#......###########2########','#..*...#.}.......Y.......*.#','############################']},
 ];
 
 /* ---------- audio ---------- */
@@ -251,21 +240,21 @@ const AU={ctx:null,start(){if(this.ctx){if(this.ctx.state==='suspended')this.ctx
 };
 
 /* ---------- state ---------- */
-const G={lv:0,phase:'menu',clock:0,T:30,tTurn:0,rec:[],debts:[],held:[],player:null,ghost:null,relics:[],bullets:[],doors:[],pads:[],turrets:[],walls:null,map:null,W:0,Hm:0,start:null,turn:null,exit:null,input:{x:0,y:0},keys:{},acc:0,shake:0,msg:'',credit:null,dead:false,won:false,lastTick:0,relicGot:0,fwdRelics:0};
+const G={lv:0,phase:'menu',clock:0,T:30,tTurn:0,tTurn2:-1,recF:[],recI:[],crateRec:[],debts:[],held:[],heldI:[],player:null,ghostF:null,ghostI:null,relics:[],doors:[],pads:[],turrets:[],crates:[],guards:[],lasers:[],vents:[],walls:null,W:0,Hm:0,start:null,turn:null,turn2:null,exit:null,exit2:null,input:{x:0,y:0},keys:{},acc:0,shake:0,credit:null,dead:false,won:false,relicGot:0,air:0,airMax:0,carry:null,nearCrate:null,paused:false,flash:0,camX:0,camZ:0};
 const level=()=>LEVELS[G.lv];
+const isFwd=()=>G.phase==='forward'||G.phase==='forward2';
 
 /* ---------- three.js ---------- */
 const canvas=$('#c');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
-renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.NoToneMapping;renderer.outputEncoding=THREE.LinearEncoding;
 const scene=new THREE.Scene();scene.background=new THREE.Color('#0b0e1a').convertSRGBToLinear();scene.fog=new THREE.Fog(new THREE.Color('#0b0e1a').convertSRGBToLinear(),40,90);
 const camera=new THREE.PerspectiveCamera(42,1,.5,200);scene.add(camera);
 const hemi=new THREE.HemisphereLight(0x8fa4c8,0x0b0e1a,.55);scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xffffff,1.1);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.near=1;sun.shadow.camera.far=120;sun.shadow.bias=-0.0002;sun.shadow.normalBias=.05;scene.add(sun);scene.add(sun.target);
 const phaseLight=new THREE.PointLight(0xff6a3d,0,14,2);scene.add(phaseLight);
 let W=0,H=0;
-/* post: HDR target, bloom, vignette, phase tint, FXAA */
-const POST={on:true,rt:null,a:null,b:null,c:null};
+const POST={rt:null,a:null,b:null,c:null};
 const quadCam=new THREE.OrthographicCamera(-1,1,1,-1,0,1),quadScene=new THREE.Scene();const quad=new THREE.Mesh(new THREE.PlaneGeometry(2,2),new THREE.MeshBasicMaterial());quadScene.add(quad);
 const VS=`varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}`;
 const brightMat=new THREE.ShaderMaterial({uniforms:{t:{value:null},th:{value:1.0}},vertexShader:VS,fragmentShader:`uniform sampler2D t;uniform float th;varying vec2 vUv;void main(){vec3 c=texture2D(t,vUv).rgb;float l=dot(c,vec3(.299,.587,.114));gl_FragColor=vec4(c*smoothstep(th,th+.6,l),1.);}`,depthTest:false,depthWrite:false});
@@ -281,31 +270,30 @@ vec2 dir=vec2(-((lNW+lNE)-(lSW+lSE)),((lNW+lSW)-(lNE+lSE)));float red=max((lNW+l
 vec3 a=.5*(texture2D(t,vUv+dir*(-.1667)).rgb+texture2D(t,vUv+dir*.1667).rgb);vec3 b=a*.5+.25*(texture2D(t,vUv+dir*-.5).rgb+texture2D(t,vUv+dir*.5).rgb);float lB=dot(b,L);gl_FragColor=vec4((lB<lMin||lB>lMax)?a:b,1.);}`,depthTest:false,depthWrite:false});
 let halfOK=false;try{halfOK=renderer.capabilities.isWebGL2&&!!renderer.extensions.get('EXT_color_buffer_float')}catch(e){}
 function makeRT(w,h,depth,byte){return new THREE.WebGLRenderTarget(Math.max(2,w),Math.max(2,h),{minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,format:THREE.RGBAFormat,type:(halfOK&&!byte)?THREE.HalfFloatType:THREE.UnsignedByteType,depthBuffer:depth,stencilBuffer:depth})}
-renderer.toneMapping=THREE.NoToneMapping;renderer.outputEncoding=THREE.LinearEncoding;
 function resize(){const r=canvas.parentElement.getBoundingClientRect();W=Math.max(300,r.width);H=Math.max(380,r.height);const pr=Math.min(2,window.devicePixelRatio||1);renderer.setPixelRatio(pr);renderer.setSize(W,H,false);camera.aspect=W/H;camera.updateProjectionMatrix();const pw=Math.round(W*pr),ph=Math.round(H*pr);if(POST.rt){POST.rt.dispose();POST.a.dispose();POST.b.dispose();POST.c.dispose()}POST.rt=makeRT(pw,ph,true);POST.a=makeRT(pw>>2,ph>>2,false);POST.b=makeRT(pw>>2,ph>>2,false);POST.c=makeRT(pw,ph,false,true);blurMat.uniforms.res.value.set(pw>>2,ph>>2);fxaaMat.uniforms.res.value.set(pw,ph)}
 function renderFrame(){renderer.setRenderTarget(POST.rt);renderer.render(scene,camera);quad.material=brightMat;brightMat.uniforms.t.value=POST.rt.texture;renderer.setRenderTarget(POST.a);renderer.render(quadScene,quadCam);quad.material=blurMat;for(let i=0;i<2;i++){blurMat.uniforms.t.value=POST.a.texture;blurMat.uniforms.dir.value.set(1,0);renderer.setRenderTarget(POST.b);renderer.render(quadScene,quadCam);blurMat.uniforms.t.value=POST.b.texture;blurMat.uniforms.dir.value.set(0,1);renderer.setRenderTarget(POST.a);renderer.render(quadScene,quadCam)}quad.material=compMat;compMat.uniforms.t.value=POST.rt.texture;compMat.uniforms.b.value=POST.a.texture;renderer.setRenderTarget(POST.c);renderer.render(quadScene,quadCam);quad.material=fxaaMat;fxaaMat.uniforms.t.value=POST.c.texture;renderer.setRenderTarget(null);renderer.render(quadScene,quadCam)}
 
-const mat=(c,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.7,metalness:.1},o));
+const lin=c=>new THREE.Color(c).convertSRGBToLinear();
+const mat=(c,o={})=>{const m=new THREE.MeshStandardMaterial(Object.assign({color:lin(c),roughness:.7,metalness:.1},o));if(o.emissive)m.emissive=lin(o.emissive);m.userData.lin=true;return m};
 function linify(root){root.traverse(o=>{const ms=o.material?(Array.isArray(o.material)?o.material:[o.material]):[];for(const m of ms){if(m.userData.lin)continue;m.userData.lin=true;if(m.color)m.color.convertSRGBToLinear();if(m.emissive)m.emissive.convertSRGBToLinear()}if(o.isLight&&!o.userData.lin){o.userData.lin=true;o.color.convertSRGBToLinear();if(o.groundColor)o.groundColor.convertSRGBToLinear()}})}
 const TEX=(w,h,draw)=>{const cv=document.createElement('canvas');cv.width=w;cv.height=h;draw(cv.getContext('2d'),w,h);const t=new THREE.CanvasTexture(cv);t.encoding=THREE.sRGBEncoding;return t};
-const floorTex=(()=>{const t=TEX(256,256,(c,w,h)=>{c.fillStyle='#1a2034';c.fillRect(0,0,w,h);c.strokeStyle='#2b3350';c.lineWidth=3;c.strokeRect(2,2,w-4,h-4);c.fillStyle='rgba(255,255,255,.04)';for(let i=0;i<600;i++)c.fillRect(Math.random()*w,Math.random()*h,2,2);c.fillStyle='#343d5e';c.fillRect(120,120,16,16)});t.wrapS=t.wrapT=THREE.RepeatWrapping;return t})();
-const wallTex=TEX(128,128,(c,w,h)=>{c.fillStyle='#2a3150';c.fillRect(0,0,w,h);c.fillStyle='#232a45';for(let y=0;y<h;y+=32)for(let x=((y/32)%2)*32;x<w;x+=64)c.fillRect(x+2,y+2,60,28);c.fillStyle='rgba(255,255,255,.05)';for(let i=0;i<300;i++)c.fillRect(Math.random()*w,Math.random()*h,2,2)});wallTex.wrapS=wallTex.wrapT=THREE.RepeatWrapping;
-const COL={fwd:'#ff6a3d',inv:'#3da9ff',gold:'#ffd166',bad:'#ff3b5c'};
-const levelGroup=new THREE.Group();scene.add(levelGroup);
-const fxGroup=new THREE.Group();scene.add(fxGroup);
-/* particles */
+function floorTex(col){const t=TEX(256,256,(c,w,h)=>{c.fillStyle=col;c.fillRect(0,0,w,h);c.strokeStyle='rgba(255,255,255,.08)';c.lineWidth=3;c.strokeRect(2,2,w-4,h-4);c.fillStyle='rgba(255,255,255,.04)';for(let i=0;i<600;i++)c.fillRect(Math.random()*w,Math.random()*h,2,2);c.fillStyle='rgba(255,255,255,.1)';c.fillRect(120,120,16,16)});t.wrapS=t.wrapT=THREE.RepeatWrapping;return t}
+function wallTexF(col){const t=TEX(128,128,(c,w,h)=>{c.fillStyle=col;c.fillRect(0,0,w,h);c.fillStyle='rgba(0,0,0,.18)';for(let y=0;y<h;y+=32)for(let x=((y/32)%2)*32;x<w;x+=64)c.fillRect(x+2,y+2,60,28);c.fillStyle='rgba(255,255,255,.05)';for(let i=0;i<300;i++)c.fillRect(Math.random()*w,Math.random()*h,2,2)});t.wrapS=t.wrapT=THREE.RepeatWrapping;return t}
+const crateTex=TEX(128,128,(c,w,h)=>{c.fillStyle='#8a6a3a';c.fillRect(0,0,w,h);c.strokeStyle='#4a3418';c.lineWidth=8;c.strokeRect(6,6,w-12,h-12);c.beginPath();c.moveTo(10,10);c.lineTo(w-10,h-10);c.moveTo(w-10,10);c.lineTo(10,h-10);c.stroke();c.fillStyle='#ff6a3d';c.fillRect(44,52,40,24)});
+const COL={fwd:'#ff6a3d',inv:'#3da9ff',gold:'#ffd166',bad:'#ff3b5c',green:'#5ce1a3'};
+const levelGroup=new THREE.Group();scene.add(levelGroup);const fxGroup=new THREE.Group();scene.add(fxGroup);
 const PN=140;const partMesh=new THREE.InstancedMesh(new THREE.BoxGeometry(.12,.12,.12),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.5}),PN);partMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);partMesh.count=0;scene.add(partMesh);
 const parts=[];const tmpM=new THREE.Matrix4(),tmpQ=new THREE.Quaternion(),tmpS=new THREE.Vector3(),tmpV=new THREE.Vector3(),tmpE=new THREE.Euler();
-function burst(x,y,z,color,n,sp){for(let i=0;i<n;i++){if(parts.length>=PN)parts.shift();parts.push({x,y:y+Math.random()*.3,z,vx:(Math.random()-.5)*(sp||6),vy:2+Math.random()*4,vz:(Math.random()-.5)*(sp||6),t:0,life:.5+Math.random()*.5,c:new THREE.Color(color).convertSRGBToLinear()})}}
-function updateParts(dt){const inv=G.phase==='inverted';for(const p of parts){p.t+=dt;const s=inv?-1:1;p.x+=p.vx*dt*s;p.y+=p.vy*dt*s;p.z+=p.vz*dt*s;p.vy-=14*dt;if(p.y<0){p.y=0;p.vy*=-.3}}for(let i=parts.length-1;i>=0;i--)if(parts[i].t>parts[i].life)parts.splice(i,1);partMesh.count=parts.length;parts.forEach((p,i)=>{const s=.12*(1-p.t/p.life)+.03;tmpS.set(s,s,s);tmpE.set(p.t*5,p.t*7,0);tmpQ.setFromEuler(tmpE);tmpM.compose(tmpV.set(p.x,p.y+.1,p.z),tmpQ,tmpS);partMesh.setMatrixAt(i,tmpM);partMesh.setColorAt(i,p.c)});partMesh.instanceMatrix.needsUpdate=true;if(partMesh.instanceColor)partMesh.instanceColor.needsUpdate=true}
-/* ambient motes, they drift the other way when inverted */
-const motes=(()=>{const n=260,g=new THREE.BufferGeometry(),p=new Float32Array(n*3),d=[];for(let i=0;i<n;i++){d.push({x:Math.random()*60-10,y:Math.random()*8,z:Math.random()*40-10});}g.setAttribute('position',new THREE.BufferAttribute(p,3));const m=new THREE.Points(g,new THREE.PointsMaterial({size:.12,color:'#ffffff',transparent:true,opacity:.5,depthWrite:false}));m.frustumCulled=false;scene.add(m);return{m,d,p,g}})();
-function updateMotes(dt){const inv=G.phase==='inverted',s=inv?-1:1;motes.d.forEach((q,i)=>{q.y+=.35*dt*s;q.x+=Math.sin(G.clock*.7+i)*.2*dt;if(q.y>8)q.y=0;if(q.y<0)q.y=8;motes.p[i*3]=q.x;motes.p[i*3+1]=q.y;motes.p[i*3+2]=q.z});motes.g.attributes.position.needsUpdate=true}
+function burst(x,y,z,color,n,sp){for(let i=0;i<n;i++){if(parts.length>=PN)parts.shift();parts.push({x,y:y+Math.random()*.3,z,vx:(Math.random()-.5)*(sp||6),vy:2+Math.random()*4,vz:(Math.random()-.5)*(sp||6),t:0,life:.5+Math.random()*.5,c:lin(color)})}}
+function updateParts(dt){const s=G.phase==='inverted'?-1:1;for(const p of parts){p.t+=dt;p.x+=p.vx*dt*s;p.y+=p.vy*dt*s;p.z+=p.vz*dt*s;p.vy-=14*dt;if(p.y<0){p.y=0;p.vy*=-.3}}for(let i=parts.length-1;i>=0;i--)if(parts[i].t>parts[i].life)parts.splice(i,1);partMesh.count=parts.length;parts.forEach((p,i)=>{const sz=.12*(1-p.t/p.life)+.03;tmpS.set(sz,sz,sz);tmpE.set(p.t*5,p.t*7,0);tmpQ.setFromEuler(tmpE);tmpM.compose(tmpV.set(p.x,p.y+.1,p.z),tmpQ,tmpS);partMesh.setMatrixAt(i,tmpM);partMesh.setColorAt(i,p.c)});partMesh.instanceMatrix.needsUpdate=true;if(partMesh.instanceColor)partMesh.instanceColor.needsUpdate=true}
+const motes=(()=>{const n=260,g=new THREE.BufferGeometry(),p=new Float32Array(n*3),d=[];for(let i=0;i<n;i++)d.push({x:Math.random()*60-10,y:Math.random()*8,z:Math.random()*40-10});g.setAttribute('position',new THREE.BufferAttribute(p,3));const m=new THREE.Points(g,new THREE.PointsMaterial({size:.12,color:'#ffffff',transparent:true,opacity:.5,depthWrite:false}));m.frustumCulled=false;scene.add(m);return{m,d,p,g}})();
+function updateMotes(dt){const s=G.phase==='inverted'?-1:1;motes.d.forEach((q,i)=>{q.y+=.35*dt*s;q.x+=Math.sin(G.clock*.7+i)*.2*dt;if(q.y>8)q.y=0;if(q.y<0)q.y=8;motes.p[i*3]=q.x;motes.p[i*3+1]=q.y;motes.p[i*3+2]=q.z});motes.g.attributes.position.needsUpdate=true}
 
 /* ---------- character ---------- */
-function buildFigure(trimColor,ghost){
+function buildFigure(trimColor,ghost,sentry){
  const g=new THREE.Group();const o=ghost?{transparent:true,opacity:.38,depthWrite:false}:{};
- const suit=mat('#1e2440',Object.assign({roughness:.8},o)),suit2=mat('#2c3460',Object.assign({roughness:.85},o)),skin=mat('#e8c2a0',Object.assign({roughness:.6},o)),ink=mat('#0b0d1c',o),trim=new THREE.MeshStandardMaterial(Object.assign({color:trimColor,emissive:trimColor,emissiveIntensity:1.4,roughness:.3},o));
+ const suitC=sentry?'#2a2a30':'#1e2440',suit2C=sentry?'#3a3a44':'#2c3460';
+ const suit=mat(suitC,Object.assign({roughness:.8},o)),suit2=mat(suit2C,Object.assign({roughness:.85},o)),skin=mat(sentry?'#3a3a44':'#e8c2a0',Object.assign({roughness:.6},o)),ink=mat('#0b0d1c',o),trim=mat(trimColor,Object.assign({emissive:trimColor,emissiveIntensity:1.4,roughness:.3},o));
  const root=new THREE.Group();g.add(root);const hips=new THREE.Group();hips.position.y=.98;root.add(hips);const torso=new THREE.Group();hips.add(torso);
  const belly=new THREE.Mesh(new THREE.CylinderGeometry(.23,.21,.3,20),suit2);belly.position.y=.1;const chest=new THREE.Mesh(new THREE.CylinderGeometry(.28,.24,.4,20),suit);chest.position.y=.43;const shoulders=new THREE.Mesh(new THREE.SphereGeometry(.29,24,16),suit);shoulders.scale.set(1.18,.5,.9);shoulders.position.y=.62;
  const belt=new THREE.Mesh(new THREE.TorusGeometry(.235,.035,6,24),ink);belt.rotation.x=Math.PI/2;belt.position.y=.26;const collar=new THREE.Mesh(new THREE.TorusGeometry(.14,.045,6,18),suit2);collar.rotation.x=Math.PI/2;collar.position.y=.66;
@@ -313,196 +301,217 @@ function buildFigure(trimColor,ghost){
  torso.add(belly,chest,shoulders,belt,collar,stripe,badge);
  const neck=new THREE.Mesh(new THREE.CylinderGeometry(.08,.09,.14,10),skin);neck.position.y=.72;torso.add(neck);
  const headG=new THREE.Group();headG.position.y=.8;torso.add(headG);const head=new THREE.Mesh(new THREE.SphereGeometry(.27,32,24),skin);head.position.y=.2;headG.add(head);
- const hair=new THREE.Mesh(new THREE.SphereGeometry(.285,24,16,0,Math.PI*2,0,Math.PI*.52),mat('#1a1410',o));hair.position.y=.22;headG.add(hair);const tail=new THREE.Mesh(new THREE.CylinderGeometry(.05,.03,.4,8),mat('#1a1410',o));tail.position.set(0,.05,-.25);tail.rotation.x=.5;headG.add(tail);
- for(const dx of [-.1,.1]){const wht=new THREE.Mesh(new THREE.SphereGeometry(.07,16,12),mat('#ffffff',o));wht.position.set(dx,.03,.21);wht.scale.z=.6;headG.add(wht);const pu=new THREE.Mesh(new THREE.SphereGeometry(.03,10,8),ink);pu.position.set(dx,.03,.275);headG.add(pu);const brow=new THREE.Mesh(new THREE.BoxGeometry(.11,.025,.03),mat('#1a1410',o));brow.position.set(dx,.13,.25);brow.rotation.z=dx<0?-.2:.2;headG.add(brow)}
- const mouth=new THREE.Mesh(new THREE.BoxGeometry(.1,.02,.02),ink);mouth.position.set(0,-.09,.26);headG.add(mouth);
- // respirator mask for inverted time
+ if(sentry){const vis=new THREE.Mesh(new THREE.BoxGeometry(.44,.1,.12),mat('#ff3b5c',{emissive:'#ff3b5c',emissiveIntensity:2}));vis.position.set(0,.24,.25);headG.add(vis);const helm=new THREE.Mesh(new THREE.SphereGeometry(.3,24,16,0,Math.PI*2,0,Math.PI*.55),mat('#1a1a22',{metalness:.6,roughness:.3}));helm.position.y=.24;headG.add(helm)}
+ else{const hair=new THREE.Mesh(new THREE.SphereGeometry(.285,24,16,0,Math.PI*2,0,Math.PI*.52),mat('#1a1410',o));hair.position.y=.22;headG.add(hair);const tail=new THREE.Mesh(new THREE.CylinderGeometry(.05,.03,.4,8),mat('#1a1410',o));tail.position.set(0,.05,-.25);tail.rotation.x=.5;headG.add(tail);
+  for(const dx of [-.1,.1]){const wht=new THREE.Mesh(new THREE.SphereGeometry(.07,16,12),mat('#ffffff',o));wht.position.set(dx,.03,.21);wht.scale.z=.6;headG.add(wht);const pu=new THREE.Mesh(new THREE.SphereGeometry(.03,10,8),ink);pu.position.set(dx,.03,.275);headG.add(pu);const brow=new THREE.Mesh(new THREE.BoxGeometry(.11,.025,.03),mat('#1a1410',o));brow.position.set(dx,.13,.25);brow.rotation.z=dx<0?-.2:.2;headG.add(brow)}
+  const mouth=new THREE.Mesh(new THREE.BoxGeometry(.1,.02,.02),ink);mouth.position.set(0,-.09,.26);headG.add(mouth)}
  const mask=new THREE.Group();mask.visible=false;const cup=new THREE.Mesh(new THREE.SphereGeometry(.17,20,14,0,Math.PI*2,0,Math.PI*.6),mat('#3a4262',Object.assign({metalness:.4,roughness:.4},o)));cup.rotation.x=Math.PI/2;cup.position.set(0,-.04,.2);mask.add(cup);for(const dx of [-.14,.14]){const can=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,.08,12),mat('#8a93b8',Object.assign({metalness:.6,roughness:.3},o)));can.rotation.x=Math.PI/2;can.position.set(dx,-.08,.3);mask.add(can);const lit=new THREE.Mesh(new THREE.CircleGeometry(.025,10),trim);lit.position.set(dx,-.08,.345);mask.add(lit)}const strap=new THREE.Mesh(new THREE.TorusGeometry(.27,.02,6,24),ink);strap.rotation.x=Math.PI/2;strap.position.y=-.04;mask.add(strap);headG.add(mask);
  const arms=[],legs=[];
  for(const s of [-1,1]){const sh=new THREE.Group();sh.position.set(s*.31,.56,0);torso.add(sh);const up=new THREE.Mesh(new THREE.CylinderGeometry(.08,.07,.34,14),suit);up.position.y=-.17;sh.add(up);const pad=new THREE.Mesh(new THREE.SphereGeometry(.1,12,10),suit2);sh.add(pad);const cuff=new THREE.Mesh(new THREE.TorusGeometry(.072,.014,8,20),trim);cuff.rotation.x=Math.PI/2;cuff.position.y=-.33;sh.add(cuff);const el=new THREE.Group();el.position.y=-.34;sh.add(el);const fore=new THREE.Mesh(new THREE.CylinderGeometry(.062,.055,.3,14),suit2);fore.position.y=-.15;el.add(fore);const hand=new THREE.Mesh(new THREE.SphereGeometry(.07,14,10),skin);hand.position.y=-.32;el.add(hand);arms.push({sh,el});
   const hip=new THREE.Group();hip.position.set(s*.13,0,0);hips.add(hip);const th=new THREE.Mesh(new THREE.CylinderGeometry(.11,.09,.44,14),suit2);th.position.y=-.22;hip.add(th);const knee=new THREE.Group();knee.position.y=-.44;hip.add(knee);const shin=new THREE.Mesh(new THREE.CylinderGeometry(.085,.07,.42,14),suit2);shin.position.y=-.21;knee.add(shin);const shoe=new THREE.Mesh(new THREE.BoxGeometry(.17,.11,.34),ink);shoe.position.set(0,-.47,.07);knee.add(shoe);const sole=new THREE.Mesh(new THREE.BoxGeometry(.18,.03,.36),trim);sole.position.set(0,-.53,.07);knee.add(sole);legs.push({hip,knee})}
+ const carryG=new THREE.Group();carryG.position.y=2.15;root.add(carryG);
  if(!ghost)g.traverse(o2=>{if(o2.isMesh)o2.castShadow=true});
- g.userData={root,hips,torso,headG,arms,legs,mask,trim,phase:0};
+ g.userData={root,hips,torso,headG,arms,legs,mask,trim,phase:0,carryG};
  return g;
 }
-function poseFigure(g,speed,dt,moving){const u=g.userData;u.phase+=dt*speed*2.2;const k=clamp(speed/5,0,1.2);const ph=u.phase;u.root.rotation.x=.08*k;const bob=moving?Math.abs(Math.sin(ph))*.06*k:0;u.hips.position.y=.98+bob;for(let i=0;i<2;i++){const lp=ph+(i?Math.PI:0);const leg=u.legs[i],arm=u.arms[i],s=i?1:-1;if(moving){leg.hip.rotation.x=-Math.sin(lp)*.8*k;leg.knee.rotation.x=Math.max(0,Math.sin(lp-1.3))*1.5*k+.1;arm.sh.rotation.x=Math.sin(lp)*.9*k-.2;arm.el.rotation.x=-(.6+Math.max(0,-Math.sin(lp))*.6);arm.sh.rotation.z=s*.15}else{leg.hip.rotation.x=lerp(leg.hip.rotation.x,0,dt*8);leg.knee.rotation.x=lerp(leg.knee.rotation.x,.08,dt*8);arm.sh.rotation.x=lerp(arm.sh.rotation.x,0,dt*8);arm.el.rotation.x=lerp(arm.el.rotation.x,-.3,dt*8);arm.sh.rotation.z=s*.12+Math.sin(G.clock*2)*.02}}u.headG.rotation.y=moving?Math.sin(ph)*.05:0}
+function poseFigure(g,speed,dt,moving,carrying){const u=g.userData;u.phase+=dt*speed*2.2;const k=clamp(speed/5,0,1.2);const ph=u.phase;u.root.rotation.x=.08*k;const bob=moving?Math.abs(Math.sin(ph))*.06*k:0;u.hips.position.y=.98+bob;for(let i=0;i<2;i++){const lp=ph+(i?Math.PI:0);const leg=u.legs[i],arm=u.arms[i],s=i?1:-1;if(moving){leg.hip.rotation.x=-Math.sin(lp)*.8*k;leg.knee.rotation.x=Math.max(0,Math.sin(lp-1.3))*1.5*k+.1}else{leg.hip.rotation.x=lerp(leg.hip.rotation.x,0,Math.min(1,Math.abs(dt)*8));leg.knee.rotation.x=lerp(leg.knee.rotation.x,.08,Math.min(1,Math.abs(dt)*8))}
+ if(carrying){arm.sh.rotation.x=-2.9;arm.el.rotation.x=-.3;arm.sh.rotation.z=s*.35}else if(moving){arm.sh.rotation.x=Math.sin(lp)*.9*k-.2;arm.el.rotation.x=-(.6+Math.max(0,-Math.sin(lp))*.6);arm.sh.rotation.z=s*.15}else{arm.sh.rotation.x=lerp(arm.sh.rotation.x,0,Math.min(1,Math.abs(dt)*8));arm.el.rotation.x=lerp(arm.el.rotation.x,-.3,Math.min(1,Math.abs(dt)*8));arm.sh.rotation.z=s*.12+Math.sin(G.clock*2)*.02}}u.headG.rotation.y=moving?Math.sin(ph)*.05:0}
 
 /* ---------- level build ---------- */
 const key=(x,z)=>x+','+z;
+function makeLabel(txt,color){const s=new THREE.Sprite(new THREE.SpriteMaterial({map:TEX(96,96,(c,w,h)=>{c.fillStyle='rgba(11,14,26,.8)';c.beginPath();c.arc(48,48,44,0,7);c.fill();c.fillStyle=color;c.font='600 60px Oswald, sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(txt,48,52)}),transparent:true,depthWrite:false}));s.scale.set(.9,.9,1);return s}
+function turnstileMesh(gold){const tg=new THREE.Group();const base=new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.2,.15,40),mat('#2a3150',{metalness:.5,roughness:.4}));base.position.y=.075;tg.add(base);const ring=new THREE.Mesh(new THREE.TorusGeometry(1.05,.05,8,48),mat('#8a93b8',{metalness:.7,roughness:.3}));ring.rotation.x=Math.PI/2;ring.position.y=.15;tg.add(ring);const spin=new THREE.Group();spin.position.y=.15;tg.add(spin);for(let i=0;i<4;i++){const c=gold?(i%2?COL.gold:COL.inv):(i%2?COL.inv:COL.fwd);const blade=new THREE.Mesh(new THREE.BoxGeometry(.08,2.2,.95),mat(c,{emissive:c,emissiveIntensity:.8,roughness:.4,transparent:true,opacity:.85}));blade.position.set(Math.cos(i*Math.PI/2)*.5,1.1,Math.sin(i*Math.PI/2)*.5);blade.rotation.y=-i*Math.PI/2;spin.add(blade)}const post=new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,2.4,10),mat('#8a93b8',{metalness:.7}));post.position.y=1.35;tg.add(post);const top=ring.clone();top.position.y=2.5;tg.add(top);tg.userData.spin=spin;return tg}
+function exitMesh(color){const eg=new THREE.Group();const ring=new THREE.Mesh(new THREE.TorusGeometry(.85,.07,8,48),mat(color,{emissive:color,emissiveIntensity:1.2,roughness:.3}));ring.rotation.x=Math.PI/2;ring.position.y=.08;eg.add(ring);const col=new THREE.Mesh(new THREE.CylinderGeometry(.8,.8,3,32,1,true),new THREE.MeshBasicMaterial({color:lin(color),transparent:true,opacity:.12,side:THREE.DoubleSide,depthWrite:false}));col.position.y=1.5;eg.add(col);eg.userData.col=col;eg.userData.ring=ring;return eg}
 function buildLevel(){
  while(levelGroup.children.length)levelGroup.remove(levelGroup.children[0]);
- const L=level();const rows=L.map;G.Hm=rows.length;G.W=rows[0].length;G.walls=new Set();G.doors=[];G.pads=[];G.turrets=[];G.relics=[];
- const floor=new THREE.Mesh(new THREE.PlaneGeometry(G.W*CELL,G.Hm*CELL),new THREE.MeshStandardMaterial({map:floorTex,roughness:.9,metalness:.05}));floor.material.map=floorTex.clone();floor.material.map.repeat.set(G.W,G.Hm);floor.material.map.needsUpdate=true;floor.rotation.x=-Math.PI/2;floor.position.set(G.W*CELL/2,0,G.Hm*CELL/2);floor.receiveShadow=true;levelGroup.add(floor);
- const wallGeo=new THREE.BoxGeometry(CELL,2.6,CELL),wallMat=new THREE.MeshStandardMaterial({map:wallTex,roughness:.8,metalness:.15}),capMat=mat('#3b4570',{roughness:.5}),edgeMat=new THREE.MeshStandardMaterial({color:'#5a6a9a',emissive:'#3da9ff',emissiveIntensity:.25,roughness:.4});
+ const L=level();const P=DISTRICTS[L.d].palette;const rows=L.map;G.Hm=rows.length;G.W=rows[0].length;G.walls=new Set();G.doors=[];G.pads=[];G.turrets=[];G.relics=[];G.crates=[];G.guards=[];G.lasers=[];G.vents=[];G.turn2=null;G.exit=null;G.exit2=null;G.turn2Mesh=null;G.exit2Mesh=null;
+ const ft=floorTex(P.floor);ft.repeat.set(G.W,G.Hm);const floor=new THREE.Mesh(new THREE.PlaneGeometry(G.W*CELL,G.Hm*CELL),new THREE.MeshStandardMaterial({map:ft,roughness:.9,metalness:.05}));floor.rotation.x=-Math.PI/2;floor.position.set(G.W*CELL/2,0,G.Hm*CELL/2);floor.receiveShadow=true;levelGroup.add(floor);
+ const wallGeo=new THREE.BoxGeometry(CELL,2.6,CELL),wallMat=new THREE.MeshStandardMaterial({map:wallTexF(P.wall),roughness:.8,metalness:.15}),capMat=mat(P.cap,{roughness:.5}),edgeMat=mat('#4a5478',{emissive:P.edge,emissiveIntensity:.35,roughness:.4});
  for(let z=0;z<G.Hm;z++)for(let x=0;x<G.W;x++){const ch=rows[z][x];const cx=(x+.5)*CELL,cz=(z+.5)*CELL;
-  if(ch==='#'){G.walls.add(key(x,z));const m=new THREE.Mesh(wallGeo,wallMat);m.position.set(cx,1.3,cz);m.castShadow=true;m.receiveShadow=true;levelGroup.add(m);const cap=new THREE.Mesh(new THREE.BoxGeometry(CELL,.08,CELL),capMat);cap.position.set(cx,2.64,cz);levelGroup.add(cap);
-   const open=(dx,dz)=>{const nx=x+dx,nz=z+dz;return nz>=0&&nz<G.Hm&&nx>=0&&nx<G.W&&rows[nz][nx]!=='#'};
-   if(open(0,1)||open(0,-1)||open(1,0)||open(-1,0)){const e=new THREE.Mesh(new THREE.BoxGeometry(CELL-.1,.05,CELL-.1),edgeMat);e.position.set(cx,2.7,cz);levelGroup.add(e)}
-   continue}
+  if(ch==='#'){G.walls.add(key(x,z));const m=new THREE.Mesh(wallGeo,wallMat);m.position.set(cx,1.3,cz);m.castShadow=true;m.receiveShadow=true;levelGroup.add(m);const cap=new THREE.Mesh(new THREE.BoxGeometry(CELL,.08,CELL),capMat);cap.position.set(cx,2.64,cz);levelGroup.add(cap);const open=(dx,dz)=>{const nx=x+dx,nz=z+dz;return nz>=0&&nz<G.Hm&&nx>=0&&nx<G.W&&rows[nz][nx]!=='#'};if(open(0,1)||open(0,-1)||open(1,0)||open(-1,0)){const e=new THREE.Mesh(new THREE.BoxGeometry(CELL-.1,.05,CELL-.1),edgeMat);e.position.set(cx,2.7,cz);levelGroup.add(e)}continue}
   if(ch==='S'){G.start={x:cx,z:cz};const pad=new THREE.Mesh(new THREE.CylinderGeometry(.8,.8,.06,32),mat('#2a3150',{emissive:'#ffffff',emissiveIntensity:.08}));pad.position.set(cx,.03,cz);levelGroup.add(pad)}
-  else if(ch==='T'){G.turn={x:cx,z:cz};const tg=new THREE.Group();tg.position.set(cx,0,cz);const base=new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.2,.15,40),mat('#2a3150',{metalness:.5,roughness:.4}));base.position.y=.075;tg.add(base);const ring=new THREE.Mesh(new THREE.TorusGeometry(1.05,.05,8,48),mat('#8a93b8',{metalness:.7,roughness:.3}));ring.rotation.x=Math.PI/2;ring.position.y=.15;tg.add(ring);
-   const spin=new THREE.Group();spin.position.y=.15;tg.add(spin);for(let i=0;i<4;i++){const blade=new THREE.Mesh(new THREE.BoxGeometry(.08,2.2,.95),new THREE.MeshStandardMaterial({color:i%2?COL.inv:COL.fwd,emissive:i%2?COL.inv:COL.fwd,emissiveIntensity:.8,roughness:.4,transparent:true,opacity:.85}));blade.position.set(Math.cos(i*Math.PI/2)*.5,1.1,Math.sin(i*Math.PI/2)*.5);blade.rotation.y=-i*Math.PI/2;spin.add(blade)}const post=new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,2.4,10),mat('#8a93b8',{metalness:.7}));post.position.y=1.35;tg.add(post);const top=new THREE.Mesh(new THREE.TorusGeometry(1.05,.05,8,48),mat('#8a93b8',{metalness:.7,roughness:.3}));top.rotation.x=Math.PI/2;top.position.y=2.5;tg.add(top);tg.userData.spin=spin;levelGroup.add(tg);G.turnMesh=tg}
-  else if(ch==='X'){G.exit={x:cx,z:cz};const eg=new THREE.Group();eg.position.set(cx,0,cz);const ring=new THREE.Mesh(new THREE.TorusGeometry(.85,.07,8,48),new THREE.MeshStandardMaterial({color:COL.inv,emissive:COL.inv,emissiveIntensity:1.2,roughness:.3}));ring.rotation.x=Math.PI/2;ring.position.y=.08;eg.add(ring);const col=new THREE.Mesh(new THREE.CylinderGeometry(.8,.8,3,32,1,true),new THREE.MeshBasicMaterial({color:COL.inv,transparent:true,opacity:.12,side:THREE.DoubleSide,depthWrite:false}));col.position.y=1.5;eg.add(col);eg.userData.col=col;levelGroup.add(eg);G.exitMesh=eg}
-  else if(ch==='*'){const m=new THREE.Mesh(new THREE.OctahedronGeometry(.32),new THREE.MeshStandardMaterial({color:COL.gold,emissive:COL.gold,emissiveIntensity:1.1,roughness:.2,metalness:.5}));m.position.set(cx,1,cz);m.castShadow=true;levelGroup.add(m);const l=new THREE.PointLight(COL.gold,.5,5,2);l.position.set(cx,1.2,cz);levelGroup.add(l);G.relics.push({x:cx,z:cz,mesh:m,light:l,got:false,gotAt:-1,gotPhase:null})}
-  else if(ch>='1'&&ch<='4'){const id=ch.charCodeAt(0)-48;const vertical=rows[z][x-1]==='#'&&rows[z][x+1]==='#';const frame=new THREE.Mesh(new THREE.BoxGeometry(vertical?CELL:.3,2.7,vertical?.3:CELL),mat('#3b4570',{metalness:.5,roughness:.4}));frame.position.set(cx,1.35,cz);levelGroup.add(frame);const panel=new THREE.Mesh(new THREE.BoxGeometry(vertical?CELL-.2:.18,2.4,vertical?.18:CELL-.2),new THREE.MeshStandardMaterial({color:COL.bad,emissive:COL.bad,emissiveIntensity:.5,transparent:true,opacity:.7,roughness:.3}));panel.position.set(cx,1.2,cz);panel.castShadow=true;levelGroup.add(panel);const lbl=makeLabel(String(id),COL.bad);lbl.position.set(cx,3.1,cz);levelGroup.add(lbl);G.doors.push({id,x,z,cx,cz,mesh:panel,open:false,vertical})}
-  else if(ch>='a'&&ch<='d'){const id=ch.charCodeAt(0)-96;const pad=new THREE.Mesh(new THREE.CylinderGeometry(.75,.8,.1,32),new THREE.MeshStandardMaterial({color:'#3b4570',emissive:COL.gold,emissiveIntensity:.15,roughness:.4}));pad.position.set(cx,.05,cz);pad.receiveShadow=true;levelGroup.add(pad);const lbl=makeLabel(String.fromCharCode(64+id),COL.gold);lbl.position.set(cx,1.6,cz);levelGroup.add(lbl);G.pads.push({id,cx,cz,mesh:pad,pressed:false})}
-  else if('><^v}{AV'.includes(ch)){const inv='}{AV'.includes(ch);const dir={'>':[1,0],'}':[1,0],'<':[-1,0],'{':[-1,0],'^':[0,-1],'A':[0,-1],'v':[0,1],'V':[0,1]}[ch];
-   let nx=x,nz=z;while(!G.walls.has(key(nx+dir[0],nz+dir[1]))&&rows[nz+dir[1]]&&rows[nz+dir[1]][nx+dir[0]]!=='#'){nx+=dir[0];nz+=dir[1]}
-   const D=Math.hypot((nx-x)*CELL,(nz-z)*CELL)+CELL/2-.1;const c=inv?COL.inv:COL.fwd;
-   const tg=new THREE.Group();tg.position.set(cx,0,cz);const base=new THREE.Mesh(new THREE.CylinderGeometry(.5,.6,.7,20),mat('#2a3150',{metalness:.5,roughness:.4}));base.position.y=.35;base.castShadow=true;tg.add(base);const headM=new THREE.Mesh(new THREE.SphereGeometry(.4,20,14),mat('#3b4570',{metalness:.6,roughness:.3}));headM.position.y=.9;headM.castShadow=true;tg.add(headM);const barrel=new THREE.Mesh(new THREE.CylinderGeometry(.09,.12,.9,12),mat('#8a93b8',{metalness:.8,roughness:.2}));barrel.rotation.z=Math.PI/2;barrel.position.set(.55,.9,0);tg.add(barrel);const eye=new THREE.Mesh(new THREE.SphereGeometry(.1,10,8),new THREE.MeshStandardMaterial({color:c,emissive:c,emissiveIntensity:2}));eye.position.set(.3,1.05,0);tg.add(eye);tg.rotation.y=-Math.atan2(dir[1],dir[0]);levelGroup.add(tg);
-   G.turrets.push({cx,cz,dir,inv,D,phase:(G.turrets.length*.7)%L.turret.interval,mesh:tg,color:c})}
+  else if(ch==='T'||ch==='U'){const tg=turnstileMesh(ch==='U');tg.position.set(cx,0,cz);levelGroup.add(tg);if(ch==='T'){G.turn={x:cx,z:cz};G.turnMesh=tg}else{G.turn2={x:cx,z:cz};G.turn2Mesh=tg}}
+  else if(ch==='X'||ch==='Y'){const eg=exitMesh(ch==='X'?COL.inv:COL.fwd);eg.position.set(cx,0,cz);levelGroup.add(eg);if(ch==='X'){G.exit={x:cx,z:cz};G.exitMesh=eg}else{G.exit2={x:cx,z:cz};G.exit2Mesh=eg}}
+  else if(ch==='*'){const m=new THREE.Mesh(new THREE.OctahedronGeometry(.32),mat(COL.gold,{emissive:COL.gold,emissiveIntensity:1.1,roughness:.2,metalness:.5}));m.position.set(cx,1,cz);m.castShadow=true;levelGroup.add(m);const l=new THREE.PointLight(lin(COL.gold),.5,5,2);l.userData.lin=true;l.position.set(cx,1.2,cz);levelGroup.add(l);G.relics.push({x:cx,z:cz,mesh:m,light:l,got:false})}
+  else if(ch>='1'&&ch<='6'){const id=ch.charCodeAt(0)-48;const vertical=rows[z][x-1]==='#'&&rows[z][x+1]==='#';const frame=new THREE.Mesh(new THREE.BoxGeometry(vertical?CELL:.3,2.7,vertical?.3:CELL),mat('#3b4570',{metalness:.5,roughness:.4}));frame.position.set(cx,1.35,cz);levelGroup.add(frame);const panel=new THREE.Mesh(new THREE.BoxGeometry(vertical?CELL-.2:.18,2.4,vertical?.18:CELL-.2),mat(COL.bad,{emissive:COL.bad,emissiveIntensity:.5,transparent:true,opacity:.7,roughness:.3}));panel.position.set(cx,1.2,cz);panel.castShadow=true;levelGroup.add(panel);const lbl=makeLabel(String(id),COL.bad);lbl.position.set(cx,3.1,cz);levelGroup.add(lbl);G.doors.push({id,x,z,cx,cz,mesh:panel,open:false})}
+  else if(ch>='a'&&ch<='f'){const id=ch.charCodeAt(0)-96;const pad=new THREE.Mesh(new THREE.CylinderGeometry(.75,.8,.1,32),mat('#3b4570',{emissive:COL.gold,emissiveIntensity:.15,roughness:.4}));pad.position.set(cx,.05,cz);pad.receiveShadow=true;levelGroup.add(pad);const lbl=makeLabel(String.fromCharCode(64+id),COL.gold);lbl.position.set(cx,1.6,cz);levelGroup.add(lbl);G.pads.push({id,cx,cz,mesh:pad,pressed:false})}
+  else if(ch==='B'){const m=new THREE.Mesh(new THREE.BoxGeometry(1.2,1.2,1.2),new THREE.MeshStandardMaterial({map:crateTex,roughness:.8}));m.position.set(cx,.6,cz);m.castShadow=true;m.receiveShadow=true;levelGroup.add(m);G.crates.push({x:cx,z:cz,mesh:m,carried:false})}
+  else if(ch==='o'){const v=new THREE.Mesh(new THREE.CylinderGeometry(.7,.7,.08,24),mat('#2a4a6a',{emissive:COL.inv,emissiveIntensity:.6,roughness:.4}));v.position.set(cx,.04,cz);levelGroup.add(v);const grid=new THREE.Mesh(new THREE.TorusGeometry(.5,.04,6,24),mat('#8a93b8'));grid.rotation.x=Math.PI/2;grid.position.set(cx,.1,cz);levelGroup.add(grid);G.vents.push({x:cx,z:cz,mesh:v})}
+  else if(ch==='L'){const vertical=rows[z-1]&&(rows[z-1][x]==='L'||rows[z-1][x]==='#')||rows[z+1]&&(rows[z+1][x]==='L'||rows[z+1][x]==='#');const em=new THREE.Mesh(new THREE.BoxGeometry(vertical?.08:CELL,1.6,vertical?CELL:.08),mat(COL.bad,{emissive:COL.bad,emissiveIntensity:2,transparent:true,opacity:.75}));em.position.set(cx,.9,cz);levelGroup.add(em);for(const s of [-1,1]){const node=new THREE.Mesh(new THREE.BoxGeometry(.3,1.9,.3),mat('#3b4570',{metalness:.5}));node.position.set(cx+(vertical?0:s*CELL/2),.95,cz+(vertical?s*CELL/2:0));levelGroup.add(node)}G.lasers.push({x,z,cx,cz,mesh:em,phase:((x+z)%2)*.5,on:true})}
+  else if('><^v}{AV'.includes(ch)){const inv='}{AV'.includes(ch);const dir={'>':[1,0],'}':[1,0],'<':[-1,0],'{':[-1,0],'^':[0,-1],'A':[0,-1],'v':[0,1],'V':[0,1]}[ch];let nx=x,nz=z;while(rows[nz+dir[1]]&&rows[nz+dir[1]][nx+dir[0]]&&rows[nz+dir[1]][nx+dir[0]]!=='#'){nx+=dir[0];nz+=dir[1]}const D=Math.hypot((nx-x)*CELL,(nz-z)*CELL)+CELL/2-.1;const c=inv?COL.inv:COL.fwd;
+   const tg=new THREE.Group();tg.position.set(cx,0,cz);const base=new THREE.Mesh(new THREE.CylinderGeometry(.5,.6,.7,20),mat('#2a3150',{metalness:.5,roughness:.4}));base.position.y=.35;base.castShadow=true;tg.add(base);const headM=new THREE.Mesh(new THREE.SphereGeometry(.4,20,14),mat('#3b4570',{metalness:.6,roughness:.3}));headM.position.y=.9;headM.castShadow=true;tg.add(headM);const barrel=new THREE.Mesh(new THREE.CylinderGeometry(.09,.12,.9,12),mat('#8a93b8',{metalness:.8,roughness:.2}));barrel.rotation.z=Math.PI/2;barrel.position.set(.55,.9,0);tg.add(barrel);const eye=new THREE.Mesh(new THREE.SphereGeometry(.1,10,8),mat(c,{emissive:c,emissiveIntensity:2}));eye.position.set(.3,1.05,0);tg.add(eye);tg.rotation.y=-Math.atan2(dir[1],dir[0]);levelGroup.add(tg);
+   G.turrets.push({cx,cz,dir,inv,D,phase:(G.turrets.length*.7)%L.turret.interval,mesh:tg,color:c,hole:{x:cx+dir[0]*D,z:cz+dir[1]*D}})}
  }
- // bullet holes and bullets pools
- for(const t of G.turrets){const ex=t.cx+t.dir[0]*t.D,ez=t.cz+t.dir[1]*t.D;t.hole={x:ex,z:ez};t.holes=[]}
- G.bulletPool=[];G.holePool=[];
- // camera/shadow bounds
- linify(levelGroup);linify(scene);
+ for(const gd of (L.guards||[])){const mesh=buildFigure(COL.bad,false,true);const cone=new THREE.Mesh(new THREE.CircleGeometry(5.2,24,-Math.PI/5.2,Math.PI*2/5.2),new THREE.MeshBasicMaterial({color:lin(COL.bad),transparent:true,opacity:.14,depthWrite:false,side:THREE.DoubleSide}));cone.rotation.x=-Math.PI/2;cone.position.y=.05;const grp=new THREE.Group();grp.add(mesh,cone);levelGroup.add(grp);const pts=gd.path.map(([x,z])=>({x:(x+.5)*CELL,z:(z+.5)*CELL}));let len=0;const segs=[];for(let i=0;i<pts.length-1;i++){const d=Math.hypot(pts[i+1].x-pts[i].x,pts[i+1].z-pts[i].z);segs.push({a:pts[i],b:pts[i+1],d});len+=d}G.guards.push({pts,segs,len,speed:gd.speed,mesh,cone,grp,x:pts[0].x,z:pts[0].z,face:0})}
+ G.bulletPool=[];G.holePool=[];while(fxGroup.children.length)fxGroup.remove(fxGroup.children[0]);
+ linify(levelGroup);
  sun.position.set(G.W*CELL/2+10,24,G.Hm*CELL/2+12);sun.target.position.set(G.W*CELL/2,0,G.Hm*CELL/2);sun.target.updateMatrixWorld();const ext=Math.max(G.W,G.Hm)*CELL*.7;sun.shadow.camera.left=-ext;sun.shadow.camera.right=ext;sun.shadow.camera.top=ext;sun.shadow.camera.bottom=-ext;sun.shadow.camera.updateProjectionMatrix();
 }
-function makeLabel(txt,color){const s=new THREE.Sprite(new THREE.SpriteMaterial({map:TEX(96,96,(c,w,h)=>{c.fillStyle='rgba(11,14,26,.8)';c.beginPath();c.arc(48,48,44,0,7);c.fill();c.fillStyle=color;c.font='600 60px Oswald, sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(txt,48,52)}),transparent:true,depthWrite:false}));s.scale.set(.9,.9,1);return s}
 const bulletGeo=(()=>{const g=new THREE.SphereGeometry(.1,10,8);g.scale(3.2,1,1);return g})();
-function getBullet(color){let b=G.bulletPool.find(b=>!b.used);if(!b){const m=new THREE.Mesh(bulletGeo,new THREE.MeshStandardMaterial({color:'#ffffff',emissive:color,emissiveIntensity:3,roughness:.2}));m.rotation.z=Math.PI/2;const trail=new THREE.Mesh(new THREE.CylinderGeometry(.02,.12,2.4,8,1,true),new THREE.MeshBasicMaterial({color,transparent:true,opacity:.35,depthWrite:false,side:THREE.DoubleSide}));trail.rotation.z=Math.PI/2;trail.position.x=-1.4;m.add(trail);const g=new THREE.Group();g.add(m);fxGroup.add(g);b={g,m,trail,used:false};G.bulletPool.push(b);linify(g)}b.used=true;b.g.visible=true;b.m.material.emissive.set(color).convertSRGBToLinear();b.trail.material.color.set(color).convertSRGBToLinear();return b}
-function getHole(){let h=G.holePool.find(h=>!h.used);if(!h){const m=new THREE.Mesh(new THREE.CircleGeometry(.16,12),new THREE.MeshBasicMaterial({color:'#05060c'}));fxGroup.add(m);h={m,used:false};G.holePool.push(h);linify(m)}h.used=true;h.m.visible=true;return h}
+function getBullet(color){let b=G.bulletPool.find(b=>!b.used);if(!b){const m=new THREE.Mesh(bulletGeo,mat('#ffffff',{emissive:color,emissiveIntensity:3,roughness:.2}));const trail=new THREE.Mesh(new THREE.CylinderGeometry(.02,.12,2.4,8,1,true),new THREE.MeshBasicMaterial({color:lin(color),transparent:true,opacity:.35,depthWrite:false,side:THREE.DoubleSide}));trail.rotation.z=Math.PI/2;trail.position.x=-1.4;m.add(trail);const g=new THREE.Group();g.add(m);fxGroup.add(g);b={g,m,trail,used:false};G.bulletPool.push(b)}b.used=true;b.g.visible=true;b.m.material.emissive.copy(lin(color));b.trail.material.color.copy(lin(color));return b}
+function getHole(){let h=G.holePool.find(h=>!h.used);if(!h){const m=new THREE.Mesh(new THREE.CircleGeometry(.16,12),new THREE.MeshBasicMaterial({color:'#05060c'}));fxGroup.add(m);h={m,used:false};G.holePool.push(h)}h.used=true;h.m.visible=true;return h}
 
-/* ---------- time functions ---------- */
-function bulletsAt(t){const L=level(),out=[];for(const tr of G.turrets){const iv=L.turret.interval,v=L.turret.speed,n=Math.floor((G.T+tr.D/v)/iv)+2;for(let k=0;k<n;k++){const tk=tr.phase+k*iv;let s;if(!tr.inv){s=(t-tk)*v;if(s<0||s>tr.D)continue}else{s=(tk-t)*v;if(s<0||s>tr.D)continue}out.push({x:tr.cx+tr.dir[0]*(.6+s*(tr.D-.6)/tr.D),z:tr.cz+tr.dir[1]*(.6+s*(tr.D-.6)/tr.D),tr,k,tk})}}return out}
+/* ---------- time functions: everything below is a function of the clock ---------- */
+function frameOf(t){return clamp(Math.round(t*REC_HZ),0,1e9)}
+function recF(t){const i=frameOf(t);return i<G.recF.length?G.recF[i]:null}
+function recI(t){return G.recI[frameOf(t)]||null}
+function cratesAt(t){if(isFwd()&&t>=G.crateRec.length/REC_HZ-1/REC_HZ)return G.crates.map(c=>({x:c.x,z:c.z,carried:c.carried}));const i=frameOf(t);const r=G.crateRec[Math.min(i,G.crateRec.length-1)];return r||G.crates.map(c=>({x:c.x,z:c.z,carried:false}))}
+function guardAt(g,t){if(g.len<=0)return{x:g.x,z:g.z,face:0};const cyc=g.len*2/g.speed;let u=((t%cyc)+cyc)%cyc;let back=false;if(u>cyc/2){u=cyc-u;back=true}let s=u*g.speed;for(const sg of g.segs){if(s<=sg.d){const k=s/sg.d;const x=lerp(sg.a.x,sg.b.x,k),z=lerp(sg.a.z,sg.b.z,k);let face=Math.atan2(sg.b.x-sg.a.x,sg.b.z-sg.a.z);if(back)face+=Math.PI;return{x,z,face}}s-=sg.d}const last=g.segs[g.segs.length-1];return{x:last.b.x,z:last.b.z,face:Math.atan2(last.b.x-last.a.x,last.b.z-last.a.z)+(back?Math.PI:0)}}
+function laserOn(l,t){const L=level().laser||{period:3,duty:.5};const u=((t/L.period+l.phase)%1+1)%1;return u<L.duty}
+function crateBlocks(tr,s,t){const cs=cratesAt(t);for(const c of cs){if(c.carried)continue;const dx=c.x-tr.cx,dz=c.z-tr.cz;const along=dx*tr.dir[0]+dz*tr.dir[1];const across=Math.abs(dx*tr.dir[1]-dz*tr.dir[0]);if(along>0&&along<s&&across<.75)return true}return false}
+function bulletsAt(t){const L=level(),out=[];for(const tr of G.turrets){const iv=L.turret.interval,v=L.turret.speed,n=Math.floor((G.T+tr.D/v)/iv)+2;for(let k=0;k<n;k++){const tk=tr.phase+k*iv;let s;if(!tr.inv){s=(t-tk)*v;if(s<0||s>tr.D)continue}else{s=(tk-t)*v;if(s<0||s>tr.D)continue}if(crateBlocks(tr,s,t))continue;out.push({x:tr.cx+tr.dir[0]*(.6+s*(tr.D-.6)/tr.D),z:tr.cz+tr.dir[1]*(.6+s*(tr.D-.6)/tr.D),tr,k,tk})}}return out}
 function holesAt(t){const L=level(),out=[];for(const tr of G.turrets){const iv=L.turret.interval,v=L.turret.speed,n=Math.floor((G.T+tr.D/v)/iv)+2;for(let k=0;k<n;k++){const tk=tr.phase+k*iv;const tImpact=tr.inv?tk-tr.D/v:tk+tr.D/v;if(tr.inv?t<=tImpact:t>=tImpact)out.push({tr,k})}}return out}
-function recAt(t){const i=clamp(Math.round(t*REC_HZ),0,G.rec.length-1);return G.rec[i]}
+function onPadNow(id){const p=G.player;return G.pads.some(pd=>pd.id===id&&Math.hypot(p.x-pd.cx,p.z-pd.cz)<.9)}
 function padPressed(id,t){
- const r=G.player;const onNow=G.pads.some(p=>p.id===id&&Math.hypot(r.x-p.cx,r.z-p.cz)<.9);
- if(G.phase==='forward')return onNow||G.debts.some(d=>d.id===id&&t>=d.a&&t<=d.b);
- const rec=recAt(t);return onNow||(rec&&rec.pad===id);
+ if(onPadNow(id))return true;
+ const f=recF(t);if(f&&f.pad===id&&G.phase!=='forward')return true;
+ const r=recI(t);if(r&&r.pad===id)return true;
+ for(const c of cratesAt(t)){if(c.carried)continue;if(G.pads.some(pd=>pd.id===id&&Math.hypot(c.x-pd.cx,c.z-pd.cz)<.9))return true}
+ if(G.phase==='forward'&&G.debts.some(d=>d.id===id&&t>=d.a&&t<=d.b))return true;
+ return false;
 }
 function doorOpen(d,t){return padPressed(d.id,t)}
 
 /* ---------- player / physics ---------- */
-function blocked(x,z,t){const gx=Math.floor(x/CELL),gz=Math.floor(z/CELL);if(G.walls.has(key(gx,gz)))return true;const d=G.doors.find(d=>d.x===gx&&d.z===gz);if(d&&!doorOpen(d,t))return true;return false}
+function blocked(x,z,t){const gx=Math.floor(x/CELL),gz=Math.floor(z/CELL);if(G.walls.has(key(gx,gz)))return true;const d=G.doors.find(d=>d.x===gx&&d.z===gz);if(d&&!doorOpen(d,t))return true;for(const c of G.cratePos){if(c.carried)continue;if(Math.abs(x-c.x)<.62&&Math.abs(z-c.z)<.62)return true}return false}
 function moveCircle(p,dx,dz,t){const r=.38;const free=(x,z)=>[[x-r,z-r],[x+r,z-r],[x-r,z+r],[x+r,z+r]].every(([cx,cz])=>!blocked(cx,cz,t));const stuck=!free(p.x,p.z);const tryAxis=(ax,dv)=>{if(!dv)return;const nx=p.x+(ax==='x'?dv:0),nz=p.z+(ax==='z'?dv:0);if(free(nx,nz)||stuck){p.x=nx;p.z=nz}};tryAxis('x',dx);tryAxis('z',dz)}
 function startLevel(i){
- G.lv=i;const L=level();G.T=L.T;G.phase='forward';G.clock=0;G.tTurn=0;G.rec=[];G.debts=[];G.held=[];G.dead=false;G.won=false;G.credit=null;G.relicGot=0;G.acc=0;G.shake=0;
- buildLevel();
- if(G.player){scene.remove(G.player.mesh)}if(G.ghost){scene.remove(G.ghost.mesh)}
- G.player={x:G.start.x,z:G.start.z,vx:0,vz:0,mesh:buildFigure(COL.fwd,false),speed:0,face:0};scene.add(G.player.mesh);
- G.ghost={mesh:buildFigure(COL.fwd,true)};G.ghost.mesh.visible=false;scene.add(G.ghost.mesh);linify(scene);
+ G.lv=i;const L=level();G.T=L.T;G.phase='forward';G.clock=0;G.tTurn=0;G.tTurn2=-1;G.recF=[];G.recI=[];G.crateRec=[];G.debts=[];G.held=[];G.heldI=[];G.dead=false;G.won=false;G.credit=null;G.relicGot=0;G.acc=0;G.shake=0;G.carry=null;G.nearCrate=null;G.airMax=L.air||0;G.air=G.airMax;G.lastShot=null;
+ buildLevel();G.cratePos=G.crates.map(c=>({x:c.x,z:c.z,carried:false}));
+ if(G.player)scene.remove(G.player.mesh);if(G.ghostF)scene.remove(G.ghostF.mesh);if(G.ghostI)scene.remove(G.ghostI.mesh);
+ G.player={x:G.start.x,z:G.start.z,mesh:buildFigure(COL.fwd,false),speed:0,face:0};scene.add(G.player.mesh);
+ G.ghostF={mesh:buildFigure(COL.fwd,true)};G.ghostF.mesh.visible=false;scene.add(G.ghostF.mesh);
+ G.ghostI={mesh:buildFigure(COL.inv,true)};G.ghostI.mesh.visible=false;G.ghostI.mesh.userData.mask.visible=true;scene.add(G.ghostI.mesh);
+ linify(scene);
  G.camX=G.player.x;G.camZ=G.player.z;
- for(const b of G.bulletPool){b.used=false;b.g.visible=false}for(const h of G.holePool){h.used=false;h.m.visible=false}
  parts.length=0;partMesh.count=0;
  $('#lvname').textContent=(i+1)+' · '+L.name;$('#top').hidden=false;$('#bottom').hidden=false;$('#menu').hidden=true;$('#brief').hidden=true;$('#over').hidden=true;
+ $('#airchip').hidden=!G.airMax;$('#tlturn').style.opacity=0;$('#tlturn2').style.opacity=0;$('#tldebts').innerHTML='';
  setPhaseUI();updateHUD(true);AU.start();AU.setDrone(.5);last=performance.now();
 }
-function setPhaseUI(){const inv=G.phase==='inverted';$('#phase').textContent=inv?'Inverted':'Forward';$('#phase').className=inv?'inv':'fwd';$('#tlfill').className=inv?'inv':'';document.getElementById('tlturn').style.opacity=inv?1:0;compMat.uniforms.tint.value.setRGB(inv?0.86:1.04,inv?0.95:0.98,inv?1.12:0.9);phaseLight.color.set(inv?COL.inv:COL.fwd).convertSRGBToLinear();G.player.mesh.userData.mask.visible=inv;G.player.mesh.userData.trim.color.set(inv?COL.inv:COL.fwd).convertSRGBToLinear();G.player.mesh.userData.trim.emissive.set(inv?COL.inv:COL.fwd).convertSRGBToLinear()}
+function setPhaseUI(){const ph=G.phase;const inv=ph==='inverted';$('#phase').textContent=inv?'Inverted':ph==='forward2'?'Forward II':'Forward';$('#phase').className=inv?'inv':ph==='forward2'?'f2':'fwd';$('#tlfill').className=inv?'inv':'';compMat.uniforms.tint.value.setRGB(inv?0.86:1.04,inv?0.95:0.98,inv?1.12:0.9);phaseLight.color.copy(lin(inv?COL.inv:ph==='forward2'?COL.gold:COL.fwd));const u=G.player.mesh.userData;u.mask.visible=inv;const c=lin(inv?COL.inv:ph==='forward2'?COL.gold:COL.fwd);u.trim.color.copy(c);u.trim.emissive.copy(c)}
+function holdSpans(rec,from,to){const out=[];let cur=null;for(let i=from;i<=to&&i<rec.length;i++){const e=rec[i];const p=e?e.pad:0;if(cur&&cur.id===p){cur.b=i/REC_HZ}else{if(cur&&cur.b-cur.a>.2)out.push(cur);cur=p>0?{id:p,a:i/REC_HZ,b:i/REC_HZ}:null}}if(cur&&cur.b-cur.a>.2)out.push(cur);return out}
 function invert(){
- G.phase='inverted';G.tTurn=G.clock;G.flash=1;G.shake=.5;setPhaseUI();
- $('#tlturn').style.left=(G.tTurn/G.T*100)+'%';
- // seconds the forward self held each pad, for the timeline
- G.held=[];let cur=null;for(let i=0;i<G.rec.length;i++){const p=G.rec[i].pad;if(cur&&cur.id===p){cur.b=i/REC_HZ}else{if(cur&&cur.b-cur.a>.2)G.held.push(cur);cur=p>0?{id:p,a:i/REC_HZ,b:i/REC_HZ}:null}}if(cur&&cur.b-cur.a>.2)G.held.push(cur);
- G.ghost.mesh.visible=true;G.ghost.mesh.userData.mask.visible=false;
- toast('Inverted',`Clock runs back to zero from ${G.tTurn.toFixed(1)} s. Reach the blue exit.${G.debts.length?' Pay '+G.debts.length+' debt'+(G.debts.length>1?'s':'')+'.':''}`);
- AU.tone(220,'sawtooth',.6,.1,.4,true,880);AU.hit(.8,.5,true);
- burst(G.player.x,1,G.player.z,COL.inv,40,10);
- renderDebts();
+ G.phase='inverted';G.tTurn=G.clock;G.flash=1;G.shake=.5;G.air=G.airMax;if(G.carry){dropCrate(true)}
+ $('#tlturn').style.left=(G.tTurn/G.T*100)+'%';$('#tlturn').style.opacity=1;
+ G.held=holdSpans(G.recF,0,G.recF.length-1);
+ G.ghostF.mesh.visible=true;setPhaseUI();
+ const n=G.debts.length;toast('Inverted',`Clock runs back to zero from ${G.tTurn.toFixed(1)} s. ${G.turn2?'Find the gold turnstile, or':'Reach the blue exit.'}${n?' Pay '+n+' debt'+(n>1?'s':'')+'.':''}${G.airMax?' Watch your air.':''}`);
+ AU.tone(220,'sawtooth',.6,.1,.4,true,880);AU.hit(.8,.5,true);burst(G.player.x,1,G.player.z,COL.inv,40,10);renderDebts();
+}
+function reinvert(){
+ G.phase='forward2';G.tTurn2=G.clock;G.flash=1;G.shake=.5;
+ $('#tlturn2').style.left=(G.tTurn2/G.T*100)+'%';$('#tlturn2').style.opacity=1;
+ G.heldI=holdSpans(G.recI,frameOf(G.tTurn2),frameOf(G.tTurn));
+ G.ghostI.mesh.visible=true;setPhaseUI();
+ toast('Forward II',`You run forward again from ${G.tTurn2.toFixed(1)} s. Two of you are on the clock now. The red exit is yours.`);
+ AU.tone(880,'sawtooth',.01,.6,.4,false,220);AU.hit(.6,.5);burst(G.player.x,1,G.player.z,COL.gold,40,10);renderDebts();
 }
 function fail(title,text){if(G.dead||G.won)return;G.dead=true;G.shake=.6;AU.tone(80,'sawtooth',.01,.6,.6,false,30);AU.hit(.4,.6);burst(G.player.x,1,G.player.z,COL.bad,30,8);AU.setDrone(.15);setTimeout(()=>{$('#overtag').textContent='Timeline folded';$('#overtitle').textContent=title;$('#overtext').textContent=text;$('#overstats').hidden=true;$('#next').hidden=true;$('#over').hidden=false;$('#top').hidden=true;$('#bottom').hidden=true},900)}
-function win(){if(G.won||G.dead)return;G.won=true;const L=level();const relics=G.relicGot,left=G.clock;const score=Math.round(left*10)+relics*100;save.done[G.lv]=true;save.unlocked=Math.max(save.unlocked,G.lv+2);save.best[G.lv]=Math.max(save.best[G.lv]||0,score);persist();AU.setDrone(.2);[523,659,784,1046].forEach((f,i)=>setTimeout(()=>AU.tone(f,'triangle',.02,.5,.3,true),i*120));burst(G.player.x,1,G.player.z,COL.inv,50,10);
- setTimeout(()=>{$('#overtag').textContent='Fold closed';$('#overtitle').textContent=L.name+' cleared';$('#overtext').textContent=G.lv===LEVELS.length-1?'Every fold is closed. On the last floor the seeder hands you the mask. "Your turn," she says. You step through the turnstile and start seeding the city with everything you will have needed. The office never finds out. It never could.':'Relics and spare seconds count toward your score. The next site is unlocked.';const st=$('#overstats');st.hidden=false;st.innerHTML='';for(const [v,l] of [[score,'score'],[relics+'/'+G.relics.length,'relics'],[left.toFixed(1)+' s','spare']]){const d=document.createElement('div');d.className='stat';d.innerHTML=`<b>${v}</b><small>${l}</small>`;st.append(d)}$('#next').hidden=G.lv>=LEVELS.length-1;$('#over').hidden=false;$('#top').hidden=true;$('#bottom').hidden=true},1200)}
-function takeCredit(){const d=G.credit;if(!d)return;const t=G.clock;const debt={id:d.id,a:Math.max(0,t-.4),b:Math.min(G.T,t+3),door:d,open:true,paid:false,broken:false};G.debts.push(debt);d.debt=debt;AU.tone(440,'square',.01,.25,.3);AU.tone(660,'square',.1,.3,.25);burst(d.cx,1.2,d.cz,COL.bad,16,4);toast('Credit taken','A future inverted you now owes switch '+String.fromCharCode(64+d.id)+'. Pay it on the way back.');renderDebts()}
-function renderDebts(){const el=$('#tldebts');el.innerHTML='';for(const d of G.debts){const e=document.createElement('div');e.className='debt'+(d.paid?' paid':'');e.style.left=(d.a/G.T*100)+'%';e.style.width=((d.b-d.a)/G.T*100)+'%';e.title='Debt: switch '+String.fromCharCode(64+d.id);el.append(e)}for(const h of G.held){const e=document.createElement('div');e.className='held';e.style.left=(h.a/G.T*100)+'%';e.style.width=((h.b-h.a)/G.T*100)+'%';el.append(e)}}
-function toast(tag,text){const el=$('#toast');el.innerHTML='';const sm=document.createElement('small');sm.textContent=tag;const d=document.createElement('div');d.textContent=text;el.append(sm,d);el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),3200)}
+function win(){if(G.won||G.dead)return;G.won=true;const L=level();const relics=G.relicGot;const spare=G.phase==='forward2'?G.T-G.clock:G.clock;const score=Math.round(spare*10)+relics*100;let stars=1+(relics===G.relics.length?1:0)+(spare>=L.par?1:0);save.done[G.lv]=true;save.stars[G.lv]=Math.max(save.stars[G.lv]||0,stars);save.best[G.lv]=Math.max(save.best[G.lv]||0,score);persist();AU.setDrone(.2);[523,659,784,1046].forEach((f,i)=>setTimeout(()=>AU.tone(f,'triangle',.02,.5,.3,true),i*120));burst(G.player.x,1,G.player.z,COL.inv,50,10);
+ setTimeout(()=>{$('#overtag').textContent='Fold closed · '+'★'.repeat(stars)+'☆'.repeat(3-stars);$('#overtitle').textContent=L.name+' cleared';$('#overtext').textContent=G.lv===LEVELS.length-1?'Every fold is closed. On the top floor the seeder hands you the mask. "Your turn," she says. You step through the turnstile and start seeding the city with everything you will have needed. The office never finds out. It never could.':`Stars: one for clearing, one for all relics, one for ${L.par} s or more to spare.${totalStars()>=DISTRICTS[Math.min(3,L.d+1)].need&&L.d<3?' The next district is open.':''}`;const st=$('#overstats');st.hidden=false;st.innerHTML='';for(const [v,l] of [[score,'score'],[relics+'/'+G.relics.length,'relics'],[spare.toFixed(1)+' s','spare']]){const d=document.createElement('div');d.className='stat';d.innerHTML=`<b>${v}</b><small>${l}</small>`;st.append(d)}$('#next').hidden=!(G.lv<LEVELS.length-1&&unlocked(G.lv+1));$('#over').hidden=false;$('#top').hidden=true;$('#bottom').hidden=true},1200)}
+function totalStars(){return Object.values(save.stars).reduce((a,b)=>a+b,0)}
+function unlocked(i){const L=LEVELS[i];if(!L)return false;if(totalStars()<DISTRICTS[L.d].need)return false;const first=LEVELS.findIndex(x=>x.d===L.d);return i===first||save.done[i-1]}
+function takeCredit(){const d=G.credit;if(!d)return;if(G.phase!=='forward'){toast('No credit','There is no inverted you left to pay for this. Only the first forward run can borrow.');return}const t=G.clock;const debt={id:d.id,a:Math.max(0,t-.4),b:Math.min(G.T,t+3),door:d,open:true,paid:false};G.debts.push(debt);d.debt=debt;AU.tone(440,'square',.01,.25,.3);AU.tone(660,'square',.1,.3,.25);burst(d.cx,1.2,d.cz,COL.bad,16,4);toast('Credit taken','A future inverted you now owes switch '+String.fromCharCode(64+d.id)+'. Pay it on the way back.');renderDebts()}
+function pickCrate(){const c=G.nearCrate;if(!c||G.carry||G.phase!=='forward')return;c.carried=true;G.carry=c;c.mesh.position.set(0,0,0);G.player.mesh.userData.carryG.add(c.mesh);AU.tone(300,'triangle',.02,.15,.3);}
+function dropCrate(force){const c=G.carry;if(!c)return;const p=G.player;const fx=Math.sin(p.face),fz=Math.cos(p.face);let dx=(Math.floor((p.x+fx*1.3)/CELL)+.5)*CELL,dz=(Math.floor((p.z+fz*1.3)/CELL)+.5)*CELL;if(Math.floor(dx/CELL)===Math.floor(p.x/CELL)&&Math.floor(dz/CELL)===Math.floor(p.z/CELL)){dx=(Math.floor((p.x+fx*2)/CELL)+.5)*CELL;dz=(Math.floor((p.z+fz*2)/CELL)+.5)*CELL}const cell=(x,z)=>{const gx=Math.floor(x/CELL),gz=Math.floor(z/CELL);return !G.walls.has(key(gx,gz))&&!G.doors.some(d=>d.x===gx&&d.z===gz)&&!G.cratePos.some(o=>o!==G.cratePos[G.crates.indexOf(c)]&&!o.carried&&Math.abs(o.x-x)<1.2&&Math.abs(o.z-z)<1.2)&&!(G.turn&&Math.hypot(G.turn.x-x,G.turn.z-z)<1.4)};if(!cell(dx,dz)){if(force){dx=p.x;dz=p.z}else{AU.tone(160,'sawtooth',.005,.15,.25);floatText(p.x,p.z,'no room',COL.bad);return}}c.carried=false;G.carry=null;c.x=dx;c.z=dz;G.player.mesh.userData.carryG.remove(c.mesh);levelGroup.add(c.mesh);c.mesh.position.set(dx,.6,dz);AU.hit(.12,.3);burst(dx,.2,dz,'#c9a06a',8,3)}
+function renderDebts(){const el=$('#tldebts');el.innerHTML='';for(const d of G.debts){const e=document.createElement('div');e.className='debt'+(d.paid?' paid':'');e.style.left=(d.a/G.T*100)+'%';e.style.width=((d.b-d.a)/G.T*100)+'%';el.append(e)}for(const h of G.held){const e=document.createElement('div');e.className='held';e.style.left=(h.a/G.T*100)+'%';e.style.width=((h.b-h.a)/G.T*100)+'%';el.append(e)}for(const h of G.heldI){const e=document.createElement('div');e.className='heldI';e.style.left=(h.a/G.T*100)+'%';e.style.width=((h.b-h.a)/G.T*100)+'%';el.append(e)}}
+function toast(tag,text){const el=$('#toast');el.innerHTML='';const sm=document.createElement('small');sm.textContent=tag;const d=document.createElement('div');d.textContent=text;el.append(sm,d);el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),3400)}
 function floatText(x,z,s,c){const el=document.createElement('div');el.className='ft';el.textContent=s;el.style.color=c||'#fff';$('#labels').append(el);labels.push({el,x,z,t:0})}
 const labels=[];const proj=new THREE.Vector3();
 function updateLabels(dt){for(let i=labels.length-1;i>=0;i--){const L=labels[i];L.t+=dt;if(L.t>1.4){L.el.remove();labels.splice(i,1);continue}proj.set(L.x,1.8+L.t*1.2,L.z).project(camera);L.el.style.left=((proj.x+1)/2*W)+'px';L.el.style.top=((1-proj.y)/2*H)+'px';L.el.style.opacity=1-L.t/1.4}}
+function seen(g,t,px,pz){const gp=guardAt(g,t);const dx=px-gp.x,dz=pz-gp.z;const d=Math.hypot(dx,dz);if(d>5||d<.01)return false;const ang=Math.atan2(dx,dz);let diff=Math.abs(((ang-gp.face)%(Math.PI*2)+Math.PI*3)%(Math.PI*2)-Math.PI);if(diff>Math.PI/5.2)return false;for(let s=.5;s<d;s+=.5){const x=gp.x+dx/d*s,z=gp.z+dz/d*s;const gx=Math.floor(x/CELL),gz=Math.floor(z/CELL);if(G.walls.has(key(gx,gz)))return false;const dr=G.doors.find(q=>q.x===gx&&q.z===gz);if(dr&&!dr.open)return false;if(G.cratePos.some(c=>!c.carried&&Math.abs(c.x-x)<.6&&Math.abs(c.z-z)<.6))return false}return true}
 
 /* ---------- simulation step (fixed 1/60) ---------- */
 function step(dt){
  const p=G.player,inv=G.phase==='inverted';
  if(G.dead||G.won)return;
- // clock
- if(inv){G.clock-=dt;if(G.clock<=0){G.clock=0;fail('Out of time','The clock reached zero before you reached the exit. Invert later next time: every forward second you wait is an inverted second you get back.');return}}
- else{G.clock+=dt;if(G.clock>=G.T){G.clock=G.T;fail('Timer expired','You never reached the turnstile. Forward time is limited; the turnstile is the only way to earn more.');return}}
+ if(inv){G.clock-=dt;if(G.clock<=0){G.clock=0;fail('Out of time','The clock reached zero before you reached an exit. Invert later next time: every forward second you wait is an inverted second you get back.');return}
+  if(G.airMax){const onVent=G.vents.some(v=>Math.hypot(p.x-v.x,p.z-v.z)<.9);G.air+=onVent?12*dt:-dt;G.air=Math.min(G.airMax,G.air);if(G.air<=0){fail('Out of air','The mask ran dry. Inverted lungs cannot use forward air. Plan the way back through the blue vents.');return}}}
+ else{G.clock+=dt;if(G.clock>=G.T){G.clock=G.T;fail('Timer expired',G.phase==='forward2'?'The forward window closed before you reached the red exit.':'You never reached the turnstile. Forward time is limited; the turnstile is the only way to earn more.');return}}
  const t=G.clock;
- // movement
+ G.cratePos=cratesAt(t);
  let ix=G.input.x,iz=G.input.y;const k=G.keys;if(k.KeyA||k.ArrowLeft)ix-=1;if(k.KeyD||k.ArrowRight)ix+=1;if(k.KeyW||k.ArrowUp)iz-=1;if(k.KeyS||k.ArrowDown)iz+=1;const m=Math.hypot(ix,iz);if(m>1){ix/=m;iz/=m}
- const sp=5;moveCircle(p,ix*sp*dt,iz*sp*dt,t);p.speed=Math.hypot(ix,iz)*sp;if(p.speed>.1)p.face=Math.atan2(ix,iz);
- // doors
+ const sp=G.carry?4:5;moveCircle(p,ix*sp*dt,iz*sp*dt,t);p.speed=Math.hypot(ix,iz)*sp;if(p.speed>.1)p.face=Math.atan2(ix,iz);
+ if(G.carry){G.carry.x=p.x;G.carry.z=p.z}
  for(const d of G.doors)d.open=doorOpen(d,t);
- // pads
  let onPad=0;for(const pd of G.pads){pd.pressed=padPressed(pd.id,t);if(Math.hypot(p.x-pd.cx,p.z-pd.cz)<.9)onPad=pd.id}
- if(!inv){const idx=Math.round(t*REC_HZ);const entry={x:p.x,z:p.z,pad:onPad,face:p.face,sp:p.speed};for(let i=G.rec.length;i<idx;i++)G.rec[i]=G.rec[i-1]||entry;G.rec[idx]=entry}
- // debts
+ const entry={x:p.x,z:p.z,pad:onPad,face:p.face,sp:p.speed,carry:!!G.carry};
+ if(G.phase==='forward'){const idx=frameOf(t);for(let i=G.recF.length;i<idx;i++)G.recF[i]=G.recF[i-1]||entry;G.recF[idx]=entry;const cr=G.crates.map(c=>({x:c.x,z:c.z,carried:c.carried}));for(let i=G.crateRec.length;i<idx;i++)G.crateRec[i]=G.crateRec[i-1]||cr;G.crateRec[idx]=cr}
+ else if(inv){G.recI[frameOf(t)]=entry}
  for(const d of G.debts){
-  if(!inv){const inDoor=Math.hypot(p.x-d.door.cx,p.z-d.door.cz)<1.25;if(inDoor){d.entered=true;if(t>d.b-.4){d.b=Math.min(G.T,t+.4);renderDebts()}}if(d.open&&d.entered&&!inDoor){d.open=false;d.b=Math.min(d.b,t+.4);renderDebts()}if(d.open&&!d.entered&&t>=d.b){d.open=false;renderDebts()}}
-  else{if(t<=d.b&&t>=d.a){if(onPad!==d.id){d.broken=true;fail('Paradox','You walked through door '+d.id+' on a promise that switch '+String.fromCharCode(64+d.id)+' would be held at '+d.a.toFixed(1)+' to '+d.b.toFixed(1)+' s. Nobody was there. The timeline folded.');return}}if(t<d.a&&!d.paid){d.paid=true;AU.tone(880,'triangle',.3,.05,.3,true);floatText(p.x,p.z,'debt paid',COL.inv);renderDebts()}}
+  if(G.phase==='forward'){const inDoor=Math.hypot(p.x-d.door.cx,p.z-d.door.cz)<1.25;if(inDoor){d.entered=true;if(t>d.b-.4){d.b=Math.min(G.T,t+.4);renderDebts()}}if(d.open&&d.entered&&!inDoor){d.open=false;d.b=Math.min(d.b,t+.4);renderDebts()}if(d.open&&!d.entered&&t>=d.b){d.open=false;renderDebts()}}
+  else if(inv){if(t<=d.b&&t>=d.a){if(onPad!==d.id){fail('Paradox','You walked through door '+d.id+' on a promise that switch '+String.fromCharCode(64+d.id)+' would be held at '+d.a.toFixed(1)+' to '+d.b.toFixed(1)+' s. Nobody was there. The timeline folded.');return}}if(t<d.a&&!d.paid){d.paid=true;AU.tone(880,'triangle',.3,.05,.3,true);floatText(p.x,p.z,'debt paid',COL.inv);renderDebts()}}
  }
- // credit prompt
- G.credit=null;if(!inv){for(const d of G.doors){if(!d.open&&!d.debt&&Math.hypot(p.x-d.cx,p.z-d.cz)<1.9)G.credit=d}}
- // turnstile / exit
- if(!inv&&Math.hypot(p.x-G.turn.x,p.z-G.turn.z)<.9){invert()}
- if(inv&&Math.hypot(p.x-G.exit.x,p.z-G.exit.z)<.9){win();return}
- // relics
- for(const r of G.relics){if(!r.got&&Math.hypot(p.x-r.x,p.z-r.z)<.9){r.got=true;r.gotAt=t;r.gotPhase=G.phase;G.relicGot++;r.mesh.visible=false;r.light.intensity=0;AU.tone(1320,'sine',.01,.3,.3,inv);burst(r.x,1,r.z,COL.gold,16,4);floatText(r.x,r.z,inv?'relic (you will have dropped this)':'relic',COL.gold)}}
- // bullets
- const bl=bulletsAt(t);for(const b of bl){if(Math.hypot(p.x-b.x,p.z-b.z)<.55){fail('You were hit',(b.tr.inv?'An inverted round':'A round')+' from a turret caught you at '+t.toFixed(1)+' s. Their timing is fixed: learn it forward, and inverted the same bullets run backwards.');return}}
- // bullet fire sounds at the gun
- for(const b of bl){const sAt=Math.hypot(b.x-b.tr.cx,b.z-b.tr.cz);const near=sAt<.9;const id=b.tr.cx+':'+b.k;if(near&&G.lastShot!==id){G.lastShot=id;AU.hit(.12,.25,inv!==b.tr.inv,2500)}}
+ G.credit=null;G.nearCrate=null;
+ if(isFwd()){for(const d of G.doors){if(!d.open&&!d.debt&&Math.hypot(p.x-d.cx,p.z-d.cz)<1.9)G.credit=d}}
+ if(G.phase==='forward'&&!G.carry){let best=null,bd=1.7;for(const c of G.crates){if(c.carried)continue;const dd=Math.hypot(p.x-c.x,p.z-c.z);if(dd<bd){bd=dd;best=c}}G.nearCrate=best}
+ if(G.phase==='forward'&&Math.hypot(p.x-G.turn.x,p.z-G.turn.z)<.9)invert();
+ if(inv&&G.turn2&&Math.hypot(p.x-G.turn2.x,p.z-G.turn2.z)<.9)reinvert();
+ if(inv&&G.exit&&Math.hypot(p.x-G.exit.x,p.z-G.exit.z)<.9){win();return}
+ if(G.phase==='forward2'&&G.exit2&&Math.hypot(p.x-G.exit2.x,p.z-G.exit2.z)<.9){win();return}
+ for(const r of G.relics){if(!r.got&&Math.hypot(p.x-r.x,p.z-r.z)<.9){r.got=true;G.relicGot++;r.mesh.visible=false;r.light.intensity=0;AU.tone(1320,'sine',.01,.3,.3,inv);burst(r.x,1,r.z,COL.gold,16,4);floatText(r.x,r.z,inv?'relic (you will have dropped this)':'relic',COL.gold)}}
+ const bl=bulletsAt(t);for(const b of bl){if(Math.hypot(p.x-b.x,p.z-b.z)<.55){fail('You were hit',(b.tr.inv?'An inverted round':'A round')+' from a turret caught you at '+t.toFixed(1)+' s. Their timing is fixed: learn it one way, and the other way the same bullets run backwards.');return}}
+ for(const b of bl){const sAt=Math.hypot(b.x-b.tr.cx,b.z-b.tr.cz);const id=b.tr.cx+':'+b.k;if(sAt<.9&&G.lastShot!==id){G.lastShot=id;AU.hit(.12,.25,inv!==b.tr.inv,2500)}}
+ for(const l of G.lasers){l.on=laserOn(l,t);if(l.on&&Math.abs(p.x-l.cx)<1&&Math.abs(p.z-l.cz)<1&&Math.hypot(p.x-l.cx,p.z-l.cz)<1.05){fail('Laser','A beam caught you at '+t.toFixed(1)+' s. The lattice cycles every '+(level().laser||{period:3}).period+' seconds; every other beam is half a cycle out of phase.');return}}
+ for(const g of G.guards){if(seen(g,t,p.x,p.z)){fail('Spotted','A sentry saw you at '+t.toFixed(1)+' s. Their loops never change, so the moment they look away is the same moment every time, from either end.');return}}
 }
 
 /* ---------- main loop ---------- */
-let last=performance.now();
-function frame(now){
- requestAnimationFrame(frame);
- let dt=Math.min(.08,(now-last)/1000);last=now;
- if(G.phase==='forward'||G.phase==='inverted'){if(!G.paused){G.acc+=dt;while(G.acc>=1/60){step(1/60);G.acc-=1/60}}updateHUD()}
- render(dt);
-}
+let last=performance.now(),hudT=0;
+function frame(now){requestAnimationFrame(frame);let dt=Math.min(.08,(now-last)/1000);last=now;if(G.phase==='forward'||G.phase==='inverted'||G.phase==='forward2'){if(!G.paused){G.acc+=dt;while(G.acc>=1/60){step(1/60);G.acc-=1/60}}updateHUD()}render(dt)}
 function updateHUD(force){const t=G.clock;$('#tlfill').style.width=(t/G.T*100)+'%';$('#tlmark').style.left=(t/G.T*100)+'%';$('#tlclock').textContent=t.toFixed(1)+' s';$('#relics').textContent=G.relicGot+'/'+G.relics.length;
- const act=$('#act'),pr=$('#prompt');if(G.credit&&!G.dead){act.className='btn show credit';act.textContent='Open on credit';pr.textContent='Door '+G.credit.id+' is closed. Open it on credit: a future inverted you must hold switch '+String.fromCharCode(64+G.credit.id)+'.';pr.classList.add('show')}else{act.className='btn';pr.classList.remove('show')}}
+ if(G.airMax){$('#air').textContent=Math.ceil(G.air)+' s';$('#airchip').classList.toggle('low',G.air<6)}
+ const act=$('#act'),pr=$('#prompt'),cb=$('#carry');
+ if(G.credit&&!G.dead){act.className='btn show credit';act.textContent='Open on credit';pr.textContent='Door '+G.credit.id+' is closed. Open it on credit: a future inverted you must hold switch '+String.fromCharCode(64+G.credit.id)+'.';pr.classList.add('show')}else{act.className='btn';if(!G.carry&&!G.nearCrate)pr.classList.remove('show')}
+ if(G.carry){cb.style.display='block';cb.textContent='Drop';if(!G.credit){pr.textContent='Carrying a crate. Drop it on a switch to hold it, or in a line of fire to stop bullets.';pr.classList.add('show')}}else if(G.nearCrate){cb.style.display='block';cb.textContent='Pick up';if(!G.credit){pr.textContent='A dock crate. It weighs what you weigh.';pr.classList.add('show')}}else cb.style.display='none'}
 function render(dt){
- const p=G.player;if(!p)return;
- const inv=G.phase==='inverted';
- // player pose
- p.mesh.position.set(p.x,0,p.z);p.mesh.rotation.y=lerp(p.mesh.rotation.y,p.face+Math.round((p.mesh.rotation.y-p.face)/(Math.PI*2))*Math.PI*2,Math.min(1,dt*10));poseFigure(p.mesh,p.speed,dt,p.speed>.1);
+ const p=G.player;if(!p)return;const inv=G.phase==='inverted';
+ p.mesh.position.set(p.x,0,p.z);p.mesh.rotation.y=lerp(p.mesh.rotation.y,p.face+Math.round((p.mesh.rotation.y-p.face)/(Math.PI*2))*Math.PI*2,Math.min(1,dt*10));poseFigure(p.mesh,p.speed,dt,p.speed>.1,!!G.carry);
  if(G.dead){p.mesh.userData.root.rotation.x=lerp(p.mesh.userData.root.rotation.x,-1.4,dt*6);p.mesh.position.y=lerp(p.mesh.position.y,-.3,dt*4)}
- // ghost: forward self replayed backwards
- if(inv&&G.ghost){const r=recAt(G.clock);if(r){const gm=G.ghost.mesh;gm.position.set(r.x,0,r.z);gm.rotation.y=r.face;poseFigure(gm,r.sp,-dt,r.sp>.1)}}
- // doors
+ if(G.ghostF.mesh.visible){const r=recF(G.clock);if(r&&G.clock<=G.tTurn){const gm=G.ghostF.mesh;gm.visible=true;gm.position.set(r.x,0,r.z);gm.rotation.y=r.face;poseFigure(gm,r.sp,inv?-dt:dt,r.sp>.1,r.carry)}else G.ghostF.mesh.visible=G.phase!=='forward2'||G.clock<=G.tTurn}
+ if(G.phase==='forward2'){const r=recI(G.clock);if(r&&G.clock<=G.tTurn&&G.clock>=G.tTurn2){const gm=G.ghostI.mesh;gm.visible=true;gm.position.set(r.x,0,r.z);gm.rotation.y=r.face;poseFigure(gm,r.sp,dt,r.sp>.1,false)}else G.ghostI.mesh.visible=false;const f=recF(G.clock);G.ghostF.mesh.visible=!!(f&&G.clock<=G.tTurn)}
  for(const d of G.doors){d.mesh.scale.y=lerp(d.mesh.scale.y,d.open?.04:1,Math.min(1,dt*10));d.mesh.position.y=1.2*d.mesh.scale.y;d.mesh.material.emissiveIntensity=d.open?.1:.6+Math.sin(G.clock*6)*.2}
  for(const pd of G.pads){pd.mesh.material.emissiveIntensity=lerp(pd.mesh.material.emissiveIntensity,pd.pressed?1.3:.15,Math.min(1,dt*8));pd.mesh.position.y=pd.pressed?.02:.05}
- if(G.turnMesh)G.turnMesh.userData.spin.rotation.y+=dt*(inv?-1.2:1.2);
- if(G.exitMesh){G.exitMesh.userData.col.material.opacity=inv?.18+Math.sin(G.clock*4)*.06:.04;G.exitMesh.children[0].material.emissiveIntensity=inv?1.6:.3}
+ if(G.turnMesh)G.turnMesh.userData.spin.rotation.y+=dt*(inv?-1.2:1.2);if(G.turn2Mesh)G.turn2Mesh.userData.spin.rotation.y-=dt*(inv?-1.2:1.2);
+ if(G.exitMesh){G.exitMesh.userData.col.material.opacity=inv?.18+Math.sin(G.clock*4)*.06:.04;G.exitMesh.userData.ring.material.emissiveIntensity=inv?1.6:.3}
+ if(G.exit2Mesh){const on=G.phase==='forward2';G.exit2Mesh.userData.col.material.opacity=on?.18+Math.sin(G.clock*4)*.06:.04;G.exit2Mesh.userData.ring.material.emissiveIntensity=on?1.6:.3}
  for(const r of G.relics){if(!r.got){r.mesh.rotation.y+=dt*(inv?-2:2);r.mesh.position.y=1+Math.sin(G.clock*3)*.12}}
- // bullets and holes from the time functions
+ // crates follow the time function unless carried right now
+ const cp=G.cratePos||[];G.crates.forEach((c,i)=>{if(c.carried)return;const q=cp[i];if(!q)return;if(q.carried){const f=recF(G.clock);if(f){c.mesh.visible=true;c.mesh.position.set(f.x,2.15,f.z)}}else{c.mesh.visible=true;c.mesh.position.set(q.x,.6,q.z)}});
+ for(const g of G.guards){const gp=guardAt(g,G.clock);g.grp.position.set(gp.x,0,gp.z);g.mesh.rotation.y=gp.face;g.cone.rotation.z=-gp.face+Math.PI/2;poseFigure(g.mesh,g.speed,inv?-dt:dt,true,false);const near=Math.hypot(p.x-gp.x,p.z-gp.z)<6;g.cone.material.opacity=near?.26:.12}
+ for(const l of G.lasers){l.mesh.visible=l.on;l.mesh.material.emissiveIntensity=1.6+Math.sin(G.clock*20)*.4}
+ for(const v of G.vents){v.mesh.material.emissiveIntensity=inv?.9+Math.sin(G.clock*5)*.4:.3}
  for(const b of G.bulletPool){b.used=false;b.g.visible=false}for(const h of G.holePool){h.used=false;h.m.visible=false}
  for(const b of bulletsAt(G.clock)){const m=getBullet(b.tr.color);m.g.position.set(b.x,.9,b.z);m.g.rotation.y=-Math.atan2(b.tr.dir[1],b.tr.dir[0])+((b.tr.inv!==inv)?Math.PI:0)}
  for(const h of holesAt(G.clock)){const hm=getHole();const tr=h.tr;hm.m.position.set(tr.hole.x+(h.k%3-1)*.22*Math.abs(tr.dir[1])-tr.dir[0]*.02,.6+(h.k*.37)%1.1,tr.hole.z+(h.k%3-1)*.22*Math.abs(tr.dir[0])-tr.dir[1]*.02);hm.m.rotation.set(0,tr.dir[0]?(tr.dir[0]>0?-Math.PI/2:Math.PI/2):(tr.dir[1]>0?Math.PI:0),0)}
- // camera
  G.camX=lerp(G.camX,p.x,Math.min(1,dt*5));G.camZ=lerp(G.camZ,p.z,Math.min(1,dt*5));const sh=G.shake>0?G.shake:0;if(G.shake>0)G.shake-=dt;const mobile=W<H;
  camera.position.set(G.camX+(Math.random()-.5)*sh*.5,mobile?19:15,G.camZ+(mobile?9:10)+(Math.random()-.5)*sh*.3);camera.lookAt(G.camX,0,G.camZ-1);
  phaseLight.position.set(p.x,2.2,p.z);phaseLight.intensity=.9;
  compMat.uniforms.flash.value=G.flash>0?G.flash:0;if(G.flash>0)G.flash-=dt*2;compMat.uniforms.grain.value=(performance.now()%1000)/1000;
- updateParts(dt);updateMotes(dt);updateLabels(dt);
- renderFrame();
+ updateParts(dt);updateMotes(dt);updateLabels(dt);renderFrame();
 }
 
 /* ---------- input ---------- */
-window.addEventListener('keydown',e=>{G.keys[e.code]=true;if(e.code==='KeyE'||e.code==='Space'){if(G.credit)takeCredit();e.preventDefault()}if(e.code==='KeyR'&&(G.phase==='forward'||G.phase==='inverted'))startLevel(G.lv);if(e.code==='Escape')openMenu()});
+window.addEventListener('keydown',e=>{G.keys[e.code]=true;if(e.code==='KeyE'||e.code==='Space'){if(G.credit)takeCredit();e.preventDefault()}if(e.code==='KeyF'){if(G.carry)dropCrate(false);else pickCrate()}if(e.code==='KeyR'&&G.phase!=='menu'&&!$('#over').hidden===false)startLevel(G.lv);if(e.code==='Escape')openMenu()});
 window.addEventListener('keyup',e=>{G.keys[e.code]=false});
-const stick=$('#stick'),knob=$('#knob');let stickId=null,stickC=null;
-canvas.addEventListener('pointerdown',e=>{if(G.phase!=='forward'&&G.phase!=='inverted')return;if(e.pointerType==='mouse'&&e.button!==0)return;stickId=e.pointerId;stickC={x:e.clientX,y:e.clientY};try{canvas.setPointerCapture(e.pointerId)}catch(err){}});
+const knob=$('#knob');let stickId=null,stickC=null;
+canvas.addEventListener('pointerdown',e=>{if(G.phase==='menu')return;if(e.pointerType==='mouse'&&e.button!==0)return;stickId=e.pointerId;stickC={x:e.clientX,y:e.clientY};try{canvas.setPointerCapture(e.pointerId)}catch(err){}});
 canvas.addEventListener('pointermove',e=>{if(e.pointerId!==stickId)return;const dx=e.clientX-stickC.x,dy=e.clientY-stickC.y;const m=Math.hypot(dx,dy),r=48;const f=Math.min(1,m/r);G.input.x=m?dx/m*f:0;G.input.y=m?dy/m*f:0;knob.style.transform=`translate(${G.input.x*34}px,${G.input.y*34}px)`});
 const endStick=e=>{if(e.pointerId!==stickId)return;stickId=null;G.input.x=0;G.input.y=0;knob.style.transform=''};
 canvas.addEventListener('pointerup',endStick);canvas.addEventListener('pointercancel',endStick);
 $('#act').addEventListener('click',()=>{if(G.credit)takeCredit()});
+$('#carry').addEventListener('click',()=>{if(G.carry)dropCrate(false);else pickCrate()});
 
 /* ---------- menus ---------- */
-function openMenu(){G.phase='menu';G.paused=false;$('#menu').hidden=false;$('#brief').hidden=true;$('#over').hidden=true;$('#top').hidden=true;$('#bottom').hidden=true;AU.setDrone(.2);renderLevels();$('#s-sound').checked=!!save.sound;if(!G.player){G.lv=0;buildLevel();G.player={x:G.start.x,z:G.start.z,mesh:buildFigure(COL.fwd,false),speed:0,face:0};scene.add(G.player.mesh);linify(scene);G.camX=G.start.x;G.camZ=G.start.z;G.clock=0;G.T=30;G.rec=[]}}
-function renderLevels(){const el=$('#levels');el.innerHTML='';LEVELS.forEach((L,i)=>{const b=document.createElement('button');b.className='lv'+(i+1>save.unlocked?' lock':'')+(save.done[i]?' done':'');b.innerHTML=`<b>${i+1} · ${L.name}</b><span>${i+1>save.unlocked?'Locked':save.done[i]?'Best '+(save.best[i]||0):'Open'}</span>`;if(i+1<=save.unlocked)b.addEventListener('click',()=>brief(i));el.append(b)})}
-function brief(i){G.lv=i;const L=LEVELS[i];$('#brieftag').textContent='Site '+(i+1)+' · '+L.T+' s forward';$('#brieftitle').textContent=L.name;$('#briefstory').textContent=L.story;$('#briefgoal').textContent='Goal: '+L.goal;$('#menu').hidden=true;$('#over').hidden=true;$('#brief').hidden=false;AU.start()}
-$('#play').addEventListener('click',()=>{let i=0;while(i<LEVELS.length-1&&save.done[i])i++;brief(Math.min(i,save.unlocked-1))});
+function openMenu(){G.phase='menu';G.paused=false;$('#menu').hidden=false;$('#brief').hidden=true;$('#over').hidden=true;$('#top').hidden=true;$('#bottom').hidden=true;AU.setDrone(.2);renderDistricts();$('#s-sound').checked=!!save.sound;if(!G.player){G.lv=0;buildLevel();G.cratePos=[];G.player={x:G.start.x,z:G.start.z,mesh:buildFigure(COL.fwd,false),speed:0,face:0};scene.add(G.player.mesh);G.ghostF={mesh:buildFigure(COL.fwd,true)};G.ghostF.mesh.visible=false;scene.add(G.ghostF.mesh);G.ghostI={mesh:buildFigure(COL.inv,true)};G.ghostI.mesh.visible=false;scene.add(G.ghostI.mesh);linify(scene);G.camX=G.start.x;G.camZ=G.start.z;G.clock=0;G.T=30}}
+function renderDistricts(){const el=$('#districts');el.innerHTML='';const stars=totalStars();DISTRICTS.forEach((D,di)=>{const open=stars>=D.need;const d=document.createElement('div');d.className='district'+(open?'':' lock');const sites=LEVELS.map((L,i)=>({L,i})).filter(x=>x.L.d===di);const got=sites.reduce((a,x)=>a+(save.stars[x.i]||0),0);d.innerHTML=`<div class="dsub"><h3>${di+1} · ${D.name}</h3><span class="stars">${got} / ${sites.length*3} ★${open?'':' · needs '+D.need+' ★'}</span></div><p>${D.story}</p>`;const grid=document.createElement('div');grid.className='levels';for(const {L,i} of sites){const b=document.createElement('button');const ok=unlocked(i);b.className='lv'+(ok?'':' lock')+(save.done[i]?' done':'');b.innerHTML=`<b>${i+1} · ${L.name}</b><span>${ok?('★'.repeat(save.stars[i]||0)+'☆'.repeat(3-(save.stars[i]||0))):'Locked'}</span>`;if(ok)b.addEventListener('click',()=>brief(i));grid.append(b)}d.append(grid);el.append(d)});$('#play').textContent=Object.keys(save.done).length?'Continue':'Start'}
+function brief(i){G.lv=i;const L=LEVELS[i];$('#brieftag').textContent=DISTRICTS[L.d].name+' · Site '+(i+1)+' · '+L.T+' s forward'+(L.air?' · '+L.air+' s of air':'');$('#brieftitle').textContent=L.name;$('#briefstory').textContent=L.story;$('#briefgoal').textContent='Goal: '+L.goal+' Par: '+L.par+' s to spare.';$('#menu').hidden=true;$('#over').hidden=true;$('#brief').hidden=false;AU.start()}
+$('#play').addEventListener('click',()=>{let i=0;while(i<LEVELS.length-1&&save.done[i]&&unlocked(i+1))i++;brief(i)});
 $('#begin').addEventListener('click',()=>startLevel(G.lv));$('#briefmenu').addEventListener('click',openMenu);
 $('#retry').addEventListener('click',()=>startLevel(G.lv));$('#next').addEventListener('click',()=>brief(G.lv+1));$('#overmenu').addEventListener('click',openMenu);
 $('#pausebtn').addEventListener('click',openMenu);
 $('#s-sound').addEventListener('change',e=>{save.sound=e.target.checked;persist();AU.setDrone(.4)});
-
 function init(){resize();window.addEventListener('resize',resize);openMenu();requestAnimationFrame(frame);window.__retro=G}
 const hot=window.claude&&window.claude.hot;if(hot&&hot.ready)hot.ready(init);else init();
 })();
